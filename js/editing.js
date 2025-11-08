@@ -87,6 +87,14 @@ const smartInsertCharacter = (ch, forceFullLine = false) => {
   const col = cur.col;
   const block = blocks[blockIdx];
   const row = block.data[stringIdx];
+  const cursorOnFullBar = row[col] === "|" && isFullVerticalBar(blockIdx, col);
+  
+  if (forceFullLine || cursorOnFullBar) {
+    saveUndoState();
+    // Preserve multi-string bars by shifting the whole line when writing on them
+    insertCharacterAtCursor(ch, { forceFullLine: true });
+    return;
+  }
   
   // Find next bar
   const nextBarCol = findNextBar(blockIdx, stringIdx, col);
@@ -216,17 +224,20 @@ const smartDeleteCharacter = (direction = 'forward', forceFullLine = false) => {
 };
 
 // Insert character and shift content right with cascading overflow
-const insertCharacterAtCursor = (ch) => {
+const insertCharacterAtCursor = (ch, options = {}) => {
   if (!isTabBlock(blocks[cur.block])) return;
   clearSelection();
   
+  const { forceFullLine = false } = options;
   const startBlock = cur.block;
   const col = cur.col;
   const currentBlock = blocks[startBlock];
   
-  const rowsToShift = editMode === 'insert'
-    ? [cur.stringIdx]
-    : [0, 1, 2, 3, 4, 5];
+  const rowsToShift = forceFullLine
+    ? [0, 1, 2, 3, 4, 5]
+    : (editMode === 'insert'
+      ? [cur.stringIdx]
+      : [0, 1, 2, 3, 4, 5]);
   const uniqueRows = Array.from(new Set(rowsToShift.map(row => clamp(row, 0, 5))));
   if (uniqueRows.length === 0) uniqueRows.push(cur.stringIdx);
   
