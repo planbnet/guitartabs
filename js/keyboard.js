@@ -11,7 +11,9 @@ const focusKeyboard = () => {
 
 // Check if key is printable
 const isPrintable = (e) => {
-  if (e.altKey || e.ctrlKey || e.metaKey) return false;
+  // Allow single characters even with Alt key (needed for special chars on Mac/international keyboards)
+  // But exclude Ctrl and Meta (Cmd) combinations
+  if (e.ctrlKey || e.metaKey) return false;
   const key = e.key;
   if (key.length === 1) return true;
   return false;
@@ -30,7 +32,7 @@ const onKeyDown = (e) => {
   if (isPrintable(e)) {
     e.preventDefault();
     hidePopover();
-    handlePrintable(e.key);
+    handlePrintable(e.key, e.shiftKey);
     return;
   }
   
@@ -171,9 +173,14 @@ const onKeyDown = (e) => {
           if (hasSelection) {
             deleteSelectionOrChar(cur.block);
           } else if (cur.col > 0) {
-            // Move left first, then delete at that position
+            // Check if Shift key is pressed to force full line shift
+            const forceFullLine = e.shiftKey;
             setCursor(cur.block, cur.stringIdx, cur.col - 1);
-            deleteSelectionOrChar(cur.block, { rows: [cur.stringIdx] });
+            if (typeof smartDeleteCharacter === 'function') {
+              smartDeleteCharacter('backward', forceFullLine);
+            } else {
+              deleteSelectionOrChar(cur.block, { rows: [cur.stringIdx] });
+            }
           }
         } else {
           // Replace mode: clear current char and move left
@@ -204,6 +211,14 @@ const onKeyDown = (e) => {
         if (editMode === 'shift' && !hasSelection) {
           // In shift mode without selection, delete entire column
           deleteSelectionOrChar(cur.block, { allStrings: true, targetRow: cur.stringIdx });
+        } else if (editMode === 'insert' && !hasSelection) {
+          // In insert mode, use smart delete
+          const forceFullLine = e.shiftKey;
+          if (typeof smartDeleteCharacter === 'function') {
+            smartDeleteCharacter('forward', forceFullLine);
+          } else {
+            deleteSelectionOrChar(cur.block);
+          }
         } else {
           // In other modes or with selection, delete normally
           deleteSelectionOrChar(cur.block);

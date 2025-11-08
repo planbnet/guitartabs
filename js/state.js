@@ -168,14 +168,16 @@ const undo = () => {
   // Update UI to reflect restored state
   const modeBtn = document.getElementById("btn-mode-toggle");
   if (editMode === 'shift') {
-    modeBtn.textContent = "Mode: Shift";
-    modeBtn.classList.add('insert-mode');
+    modeBtn.textContent = "Shift";
+    modeBtn.classList.remove('insert-mode');
+    modeBtn.classList.add('shift-mode');
   } else if (editMode === 'insert') {
-    modeBtn.textContent = "Mode: Insert";
+    modeBtn.textContent = "Insert";
+    modeBtn.classList.remove('shift-mode');
     modeBtn.classList.add('insert-mode');
   } else {
-    modeBtn.textContent = "Mode: Replace";
-    modeBtn.classList.remove('insert-mode');
+    modeBtn.textContent = "Replace";
+    modeBtn.classList.remove('insert-mode', 'shift-mode');
   }
   
   document.getElementById("inp-len").value = String(lineLength);

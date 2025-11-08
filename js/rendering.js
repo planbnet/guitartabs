@@ -444,6 +444,18 @@ const render = () => {
               hideNoteTooltip();
             }
           });
+          s.addEventListener("dblclick", (e) => {
+            e.stopPropagation();
+            // Insert vertical bar across all strings at this column
+            saveUndoState();
+            for (let str = 0; str < 6; str++) {
+              blocks[bi].data[str][col] = "|";
+            }
+            setCursor(bi, stringIdx, col);
+            render();
+            save();
+            focusKeyboard();
+          });
           s.addEventListener("mousedown", (e) => handleCellMouseDown(bi, stringIdx, col, e));
           s.addEventListener("touchstart", (e) => handleCellTouchStart(bi, stringIdx, col, e), { passive: true });
           
@@ -597,6 +609,10 @@ const render = () => {
     blockRemoveBtn.type = "button";
     blockRemoveBtn.innerHTML = "&times;";
     blockRemoveBtn.title = "Delete block";
+    // Hide if this is the only block
+    if (blocks.length === 1) {
+      blockRemoveBtn.style.display = "none";
+    }
     blockRemoveBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       deleteBlock(bi);

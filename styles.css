@@ -61,9 +61,9 @@ html, body {
 .toolbar button:hover { border-color: var(--accent); }
 .toolbar .primary { background: #21406d; border-color: #2b69c2; }
 .toolbar .danger { background: #3a1b1b; border-color: #6b2b2b; }
-.toolbar .mode-btn { background: #2b69c2; color: white; font-weight: 600; }
-.toolbar .mode-btn.insert-mode { background: #2b69c2; color: white; }
-.toolbar .mode-btn { min-width: 130px; text-align: center; }
+.toolbar .mode-btn { background: #8b5cf6; color: white; font-weight: 600; min-width: 90px; text-align: center; border-color: #a78bfa; }
+.toolbar .mode-btn.shift-mode { background: #059669; border-color: #10b981; }
+.toolbar .mode-btn.insert-mode { background: #2b69c2; border-color: #3b82f6; }
 .toolbar input[type="number"] {
   width: 4.5rem;
   padding: .45rem .6rem;
@@ -285,7 +285,7 @@ html, body {
 /* Modal Legend */
 .modal {
   position: fixed; inset: 0; background: rgba(0,0,0,.55);
-  display: none; align-items: center; justify-content: center; z-index: 50;
+  display: none; align-items: center; justify-content: center; z-index: 200;
   padding: 1rem;
 }
 

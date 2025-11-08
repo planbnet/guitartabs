@@ -8,6 +8,46 @@ const clearVerticalBar = (blockIndex, col) => {
   }
 };
 
+// Find next vertical bar position in a string row after given column
+const findNextBar = (blockIdx, stringIdx, fromCol) => {
+  if (!isTabBlock(blocks[blockIdx])) return -1;
+  const row = blocks[blockIdx].data[stringIdx];
+  for (let i = fromCol + 1; i < lineLength; i++) {
+    if (row[i] === '|') return i;
+  }
+  return -1;
+};
+
+// Find previous vertical bar position in a string row before given column
+const findPreviousBar = (blockIdx, stringIdx, toCol) => {
+  if (!isTabBlock(blocks[blockIdx])) return -1;
+  const row = blocks[blockIdx].data[stringIdx];
+  for (let i = toCol - 1; i >= 0; i--) {
+    if (row[i] === '|') return i;
+  }
+  return -1;
+};
+
+// Check if a vertical bar at given column spans all 6 strings
+const isFullVerticalBar = (blockIdx, col) => {
+  if (!isTabBlock(blocks[blockIdx])) return false;
+  const block = blocks[blockIdx];
+  for (let i = 0; i < 6; i++) {
+    if (block.data[i][col] !== '|') return false;
+  }
+  return true;
+};
+
+// Check if section between cursor and next bar has room (at least one dash)
+const canShiftToNextBar = (blockIdx, stringIdx, fromCol, toCol) => {
+  if (!isTabBlock(blocks[blockIdx])) return false;
+  const row = blocks[blockIdx].data[stringIdx];
+  for (let i = fromCol; i < toCol; i++) {
+    if (row[i] === '-') return true;
+  }
+  return false;
+};
+
 // Toggle edit mode between replace, shift, and insert
 const toggleEditMode = () => {
   saveUndoState();
@@ -20,18 +60,158 @@ const toggleEditMode = () => {
   }
   const btn = document.getElementById("btn-mode-toggle");
   if (editMode === 'shift') {
-    btn.textContent = "Mode: Shift";
-    btn.classList.add('insert-mode');
+    btn.textContent = "Shift";
+    btn.classList.remove('insert-mode');
+    btn.classList.add('shift-mode');
   } else if (editMode === 'insert') {
-    btn.textContent = "Mode: Insert";
+    btn.textContent = "Insert";
+    btn.classList.remove('shift-mode');
     btn.classList.add('insert-mode');
   } else {
-    btn.textContent = "Mode: Replace";
-    btn.classList.remove('insert-mode');
+    btn.textContent = "Replace";
+    btn.classList.remove('insert-mode', 'shift-mode');
   }
   save();
   if (typeof focusKeyboard === "function") {
     focusKeyboard();
+  }
+};
+
+// Smart insert for insert mode - shifts only to next bar if possible
+const smartInsertCharacter = (ch, forceFullLine = false) => {
+  if (!isTabBlock(blocks[cur.block])) return;
+  clearSelection();
+  
+  const blockIdx = cur.block;
+  const stringIdx = cur.stringIdx;
+  const col = cur.col;
+  const block = blocks[blockIdx];
+  const row = block.data[stringIdx];
+  
+  // Find next bar
+  const nextBarCol = findNextBar(blockIdx, stringIdx, col);
+  
+  // Determine if we should shift only to next bar or the whole line
+  let shiftToBar = false;
+  if (!forceFullLine && nextBarCol !== -1) {
+    // Check if the bar is full (spans all 6 strings)
+    const isBarAligned = isFullVerticalBar(blockIdx, nextBarCol);
+    // Check if there's room to shift
+    const hasRoom = canShiftToNextBar(blockIdx, stringIdx, col, nextBarCol);
+    
+    if (isBarAligned && hasRoom) {
+      shiftToBar = true;
+    }
+  }
+  
+  saveUndoState();
+  
+  if (shiftToBar) {
+    // Check if we would lose content at the position before the bar
+    const charBeforeBar = row[nextBarCol - 1];
+    if (charBeforeBar !== '-' && charBeforeBar !== '|') {
+      // Content would be lost, shift whole line instead
+      insertCharacterAtCursor(ch);
+      return;
+    }
+    
+    // Shift only to next bar
+    for (let i = nextBarCol - 1; i > col; i--) {
+      row[i] = row[i - 1];
+    }
+    row[col] = ch;
+  } else {
+    // Shift whole line (use existing logic)
+    insertCharacterAtCursor(ch);
+    return;
+  }
+  
+  // Advance cursor
+  if (cur.col < lineLength - 1) {
+    setCursor(cur.block, cur.stringIdx, cur.col + 1);
+  }
+  
+  render();
+  save();
+};
+
+// Delete with smart shifting for insert mode
+const smartDeleteCharacter = (direction = 'forward', forceFullLine = false) => {
+  if (!isTabBlock(blocks[cur.block])) return;
+  
+  const blockIdx = cur.block;
+  const stringIdx = cur.stringIdx;
+  const col = cur.col;
+  const block = blocks[blockIdx];
+  const row = block.data[stringIdx];
+  
+  // Determine shift range
+  let shiftToBar = false;
+  let targetBarCol = -1;
+  
+  if (!forceFullLine) {
+    if (direction === 'forward') {
+      // Delete key - shift from next bar
+      targetBarCol = findNextBar(blockIdx, stringIdx, col);
+    } else {
+      // Backspace - shift from previous bar (or beginning if no previous bar)
+      targetBarCol = findPreviousBar(blockIdx, stringIdx, col);
+    }
+    
+    if (direction === 'forward' && targetBarCol !== -1) {
+      // For delete, only shift to bar if bar is aligned
+      const isBarAligned = isFullVerticalBar(blockIdx, targetBarCol);
+      if (isBarAligned) {
+        shiftToBar = true;
+      }
+    } else if (direction === 'backward') {
+      // For backspace, we can always do smart shift
+      // If there's a previous bar, check if it's aligned
+      // If no previous bar, we're in the first section - still do smart shift
+      if (targetBarCol !== -1) {
+        const isBarAligned = isFullVerticalBar(blockIdx, targetBarCol);
+        if (isBarAligned) {
+          shiftToBar = true;
+        }
+      } else {
+        // No previous bar - we're in the first section, still do smart shift to next bar
+        shiftToBar = true;
+        targetBarCol = -1; // Will be handled specially below
+      }
+    }
+  }
+  
+  if (shiftToBar && direction === 'forward' && targetBarCol !== -1) {
+    // Delete: shift left only content between cursor and next bar
+    saveUndoState();
+    for (let i = col; i < targetBarCol - 1; i++) {
+      row[i] = row[i + 1];
+    }
+    row[targetBarCol - 1] = '-';
+    render();
+    save();
+  } else if (shiftToBar && direction === 'backward') {
+    // Backspace: shift left only content between start of section and next bar
+    // Find where the current section ends (next bar or end of line)
+    const sectionEnd = findNextBar(blockIdx, stringIdx, col);
+    const endCol = sectionEnd !== -1 ? sectionEnd : lineLength;
+    
+    saveUndoState();
+    // Shift content from col to endCol leftward by 1
+    for (let i = col; i < endCol - 1; i++) {
+      row[i] = row[i + 1];
+    }
+    // Add dash at the position before the end marker
+    if (sectionEnd !== -1) {
+      row[sectionEnd - 1] = '-';
+    } else {
+      row[lineLength - 1] = '-';
+    }
+    render();
+    save();
+  } else {
+    // Use normal delete for whole line
+    deleteSelectionOrChar(blockIdx, { rows: [stringIdx] });
   }
 };
 
@@ -137,7 +317,7 @@ const insertCharacterAtCursor = (ch) => {
 };
 
 // Handle printable character input
-const handlePrintable = (ch) => {
+const handlePrintable = (ch, shiftKeyPressed = false) => {
   // Only handle printable for tab blocks
   if (!isTabBlock(blocks[cur.block])) return;
   
@@ -164,9 +344,17 @@ const handlePrintable = (ch) => {
     return;
   }
   
-  if (editMode === 'shift' || editMode === 'insert') {
-    // Insert mode: shift content right
+  if (editMode === 'shift') {
+    // Shift mode: shift entire column
     insertCharacterAtCursor(charToInsert);
+  } else if (editMode === 'insert') {
+    // Insert mode: use smart insert (shift to next bar if possible)
+    // If Shift key is pressed, force full line shift
+    if (shiftKeyPressed) {
+      insertCharacterAtCursor(charToInsert);
+    } else {
+      smartInsertCharacter(charToInsert);
+    }
   } else {
     // Overwrite mode: replace current character
     // If overwriting a vertical bar, clear the entire column first
