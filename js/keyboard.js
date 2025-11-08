@@ -41,6 +41,40 @@ const onKeyDown = (e) => {
     return;
   }
   
+  // Ctrl+C or Cmd+C for copy
+  if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+    if (isTabBlock(blocks[cur.block])) {
+      const bounds = getSelectionBounds();
+      if (bounds && bounds.block === cur.block) {
+        e.preventDefault();
+        copySelectionFromBlock(cur.block);
+      }
+    }
+    return;
+  }
+  
+  // Ctrl+X or Cmd+X for cut (copy then clear)
+  if ((e.ctrlKey || e.metaKey) && e.key === 'x') {
+    if (isTabBlock(blocks[cur.block])) {
+      const bounds = getSelectionBounds();
+      if (bounds && bounds.block === cur.block) {
+        e.preventDefault();
+        copySelectionFromBlock(cur.block);
+        clearSelectionOrChar(cur.block);
+      }
+    }
+    return;
+  }
+  
+  // Ctrl+V or Cmd+V for paste
+  if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+    if (isTabBlock(blocks[cur.block]) && hasClipboardData()) {
+      e.preventDefault();
+      pasteClipboardIntoBlock(cur.block);
+    }
+    return;
+  }
+  
   const handleDirectionalMove = (dBlock, dString, dCol) => {
     if (e.shiftKey && isTabBlock(blocks[cur.block])) {
       e.preventDefault();
