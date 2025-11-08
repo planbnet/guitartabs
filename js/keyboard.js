@@ -6,7 +6,7 @@ const elKbd = document.getElementById("kbd");
 // Focus keyboard for iPad
 const focusKeyboard = () => {
   if (!elKbd) return;
-  elKbd.focus();
+  elKbd.focus({ preventScroll: true });
 };
 
 // Check if key is printable
@@ -34,8 +34,8 @@ const onKeyDown = (e) => {
     return;
   }
   
-  // Ctrl+Z for undo
-  if (e.ctrlKey && e.key === 'z') {
+  // Ctrl+Z or Cmd+Z for undo (Cmd on Mac, Ctrl on Windows/Linux)
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
     e.preventDefault();
     undo();
     return;
@@ -51,6 +51,58 @@ const onKeyDown = (e) => {
       e.preventDefault();
       clearSelection();
       resetKeyboardSelectionAnchor();
+      
+      // Smart cursor movement with tab block jumping
+      if (!isTabBlock(blocks[cur.block])) {
+        moveCursor(dBlock, dString, dCol);
+        return;
+      }
+      
+      // Handle right arrow at the end of line
+      if (dCol === 1 && cur.col === lineLength - 1) {
+        // Find next tab block
+        for (let i = cur.block + 1; i < blocks.length; i++) {
+          if (isTabBlock(blocks[i])) {
+            setCursor(i, cur.stringIdx, 0);
+            return;
+          }
+        }
+      }
+      
+      // Handle left arrow at the start of line
+      if (dCol === -1 && cur.col === 0) {
+        // Find previous tab block
+        for (let i = cur.block - 1; i >= 0; i--) {
+          if (isTabBlock(blocks[i])) {
+            setCursor(i, cur.stringIdx, lineLength - 1);
+            return;
+          }
+        }
+      }
+      
+      // Handle up arrow at the top string
+      if (dString === -1 && cur.stringIdx === 0) {
+        // Find previous tab block
+        for (let i = cur.block - 1; i >= 0; i--) {
+          if (isTabBlock(blocks[i])) {
+            setCursor(i, 5, cur.col);
+            return;
+          }
+        }
+      }
+      
+      // Handle down arrow at the bottom string
+      if (dString === 1 && cur.stringIdx === 5) {
+        // Find next tab block
+        for (let i = cur.block + 1; i < blocks.length; i++) {
+          if (isTabBlock(blocks[i])) {
+            setCursor(i, 0, cur.col);
+            return;
+          }
+        }
+      }
+      
+      // Normal movement within current block
       moveCursor(dBlock, dString, dCol);
     }
     hidePopover();
@@ -64,7 +116,7 @@ const onKeyDown = (e) => {
     case "Tab":
       e.preventDefault();
       hidePopover();
-      jumpToNextBarOrBlock();
+      toggleEditMode();
       break;
     case "Backspace":
       e.preventDefault();
@@ -72,25 +124,25 @@ const onKeyDown = (e) => {
       if (isTabBlock(blocks[cur.block])) {
         const bounds = getSelectionBounds();
         const hasSelection = bounds && bounds.block === cur.block;
-        const moveLeft = () => {
-          const newCol = Math.max(0, cur.col - 1);
-          setCursor(cur.block, cur.stringIdx, newCol);
-        };
+        
         if (editMode === 'shift') {
           if (hasSelection) {
             deleteSelectionOrChar(cur.block);
-          } else {
+          } else if (cur.col > 0) {
+            // Move left first, then delete at that position
+            setCursor(cur.block, cur.stringIdx, cur.col - 1);
             deleteSelectionOrChar(cur.block, { allStrings: true, targetRow: cur.stringIdx });
           }
-          moveLeft();
         } else if (editMode === 'insert') {
           if (hasSelection) {
             deleteSelectionOrChar(cur.block);
-          } else {
+          } else if (cur.col > 0) {
+            // Move left first, then delete at that position
+            setCursor(cur.block, cur.stringIdx, cur.col - 1);
             deleteSelectionOrChar(cur.block, { rows: [cur.stringIdx] });
           }
-          moveLeft();
         } else {
+          // Replace mode: clear current char and move left
           if (hasSelection) {
             clearSelectionOrChar(cur.block);
           } else {
@@ -103,7 +155,8 @@ const onKeyDown = (e) => {
             render();
             save();
           }
-          moveLeft();
+          const newCol = Math.max(0, cur.col - 1);
+          setCursor(cur.block, cur.stringIdx, newCol);
         }
       }
       break;
@@ -111,7 +164,16 @@ const onKeyDown = (e) => {
       e.preventDefault();
       hidePopover();
       if (isTabBlock(blocks[cur.block])) {
-        deleteSelectionOrChar(cur.block);
+        const bounds = getSelectionBounds();
+        const hasSelection = bounds && bounds.block === cur.block;
+        
+        if (editMode === 'shift' && !hasSelection) {
+          // In shift mode without selection, delete entire column
+          deleteSelectionOrChar(cur.block, { allStrings: true, targetRow: cur.stringIdx });
+        } else {
+          // In other modes or with selection, delete normally
+          deleteSelectionOrChar(cur.block);
+        }
       }
       break;
     case "Home": e.preventDefault(); setCursor(cur.block, cur.stringIdx, 0); hidePopover(); break;

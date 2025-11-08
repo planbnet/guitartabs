@@ -54,6 +54,11 @@ const formatContentForExport = () => {
       for (let i = 0; i < 6; i++) {
         content += strings[i] + block.data[i].join('') + '\n';
       }
+      
+      // Add empty line after tab blocks (except last one)
+      if (index < blocks.length - 1) {
+        content += '\n';
+      }
     } else if (block.type === 'text') {
       // Text block formatting
       content += block.data + '\n';

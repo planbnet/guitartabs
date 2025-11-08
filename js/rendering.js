@@ -126,6 +126,9 @@ function refreshClipboardButtons() {
       case "clear":
         visible = cur.block === block;
         break;
+      case "delete":
+        visible = cur.block === block;
+        break;
     }
     btn.style.display = visible ? "inline-flex" : "none";
   });
@@ -345,12 +348,23 @@ const render = () => {
       controls.appendChild(moveUpBtn);
 
       const deleteSelectionBtn = document.createElement("button");
-      deleteSelectionBtn.className = "block-btn block-btn-equal";
+      deleteSelectionBtn.className = "block-btn block-btn-equal clipboard-btn";
+      deleteSelectionBtn.dataset.role = "delete";
+      deleteSelectionBtn.dataset.block = String(bi);
       deleteSelectionBtn.textContent = "✖";
       deleteSelectionBtn.title = "Delete selection or current cell";
       deleteSelectionBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        deleteSelectionOrChar(bi);
+        const bounds = getSelectionBounds();
+        const hasSelection = bounds && bounds.block === bi;
+        
+        if (editMode === 'shift' && !hasSelection) {
+          // In shift mode without selection, delete entire column
+          deleteSelectionOrChar(bi, { allStrings: true, targetRow: cur.stringIdx });
+        } else {
+          // In other modes or with selection, delete normally
+          deleteSelectionOrChar(bi);
+        }
       });
       controls.appendChild(deleteSelectionBtn);
 
@@ -563,11 +577,7 @@ const render = () => {
       textArea.addEventListener("keydown", (e) => {
         if (e.key === "Tab") {
           e.preventDefault();
-          const indent = "    ";
-          const start = textArea.selectionStart ?? 0;
-          const end = textArea.selectionEnd ?? start;
-          textArea.setRangeText(indent, start, end, "end");
-          textArea.dispatchEvent(new Event("input", { bubbles: true }));
+          toggleEditMode();
         }
       });
       
