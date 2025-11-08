@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>ASCII Guitar Tab Editor</title>
+
+<!-- PWA Configuration -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#2a2a2a" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Tab Editor" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="toolbar">
+    <button id="btn-new-line" class="primary">New Tab Line</button>
+    <button id="btn-new-text" class="primary">New Text Line</button>
+    <button id="btn-mode-toggle" class="mode-btn">Mode: Replace</button>
+    <button id="btn-undo">Undo</button>
+    <button id="btn-text-modal">Text</button>
+    <button id="btn-clear" class="danger">Clear</button>
+    <button id="btn-legend" class="align-right">Legend</button>
+    <button id="btn-settings" class="secondary">Settings</button>
+    <input id="inp-len" type="number" min="50" max="120" step="1" value="80" class="hidden-control" aria-hidden="true" />
+  </div>
+
+  <div id="settings-modal" class="modal" role="dialog" aria-modal="true">
+    <div class="card small">
+      <h3>Settings</h3>
+      <div class="settings-row">
+        <span>Line length</span>
+        <div class="settings-len-controls">
+          <button id="settings-len-dec" class="btn">−</button>
+          <span id="settings-len-display">80</span>
+          <button id="settings-len-inc" class="btn">+</button>
+        </div>
+      </div>
+      <div style="display:flex; gap:.5rem; justify-content:flex-end;">
+        <button id="settings-close" class="btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="text-modal" class="modal" role="dialog" aria-modal="true">
+    <div class="card text-modal-card">
+      <h3>Tab Text</h3>
+      <textarea id="text-modal-content" class="text-modal-area" spellcheck="false"></textarea>
+      <div class="text-modal-actions">
+        <div class="text-modal-left">
+          <button id="text-export" class="btn">Export</button>
+          <button id="text-import" class="btn">Import File</button>
+          <button id="text-import-clipboard" class="btn">Import Clipboard</button>
+        </div>
+        <div class="text-modal-right">
+        <button id="text-cancel" class="btn">Close</button>
+          <button id="text-update" class="btn primary">Update</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div id="editor"></div>
+  </div>
+
+  <!-- Hidden input to capture keyboard on iPad -->
+  <input id="kbd" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" />
+
+  <!-- Hidden file input for importing -->
+  <input id="file-input" type="file" accept=".txt" style="display: none;" />
+
+  <!-- Legend Modal -->
+  <div id="legend" class="modal" role="dialog" aria-modal="true">
+    <div class="card">
+      <h3>Tab Legend (click to insert)</h3>
+      <div class="legend-grid">
+        <button class="legend-btn" data-symbol="h">h = hammer-on (e.g., 0h2)</button>
+        <button class="legend-btn" data-symbol="p">p = pull-off (e.g., 3p0)</button>
+        <button class="legend-btn" data-symbol="b">b = bend (e.g., 7b9)</button>
+        <button class="legend-btn" data-symbol="r">r = bend release (e.g., 9r7)</button>
+        <button class="legend-btn" data-symbol="/">/  = slide up (e.g., 5/7)</button>
+        <button class="legend-btn" data-symbol="\">\  = slide down (e.g., 7\5)</button>
+        <button class="legend-btn" data-symbol="~">~  = vibrato (e.g., 12~~~)</button>
+        <button class="legend-btn" data-symbol="x">x  = dead note (muted)</button>
+        <button class="legend-btn" data-symbol="|">|  = bar / divider</button>
+        <button class="legend-btn" data-symbol="(">(  = bend start (e.g., 5(7))</button>
+        <button class="legend-btn" data-symbol=")">)  = bend end</button>
+      </div>
+      <div class="legend-info">
+        <p><strong>Tips:</strong> Natural harmonics: &lt;12&gt; • Palm mute: PM above notes</p>
+      </div>
+      <div style="display:flex; gap:.5rem; justify-content:flex-end; margin-top:.75rem;">
+        <button id="legend-close" class="btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+<!-- Note tooltip -->
+<div id="note-tooltip"></div>
+
+<!-- Include JavaScript modules in dependency order -->
+<script src="js/state.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/rendering.js"></script>
+<script src="js/editing.js"></script>
+<script src="js/keyboard.js"></script>
+<script src="js/ui-interactions.js"></script>
+<script src="js/main.js"></script>
+
+<!-- PWA Service Worker Registration -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./js/sw.js')
+      .then(reg => console.log('Service Worker registered'))
+      .catch(err => console.log('Service Worker registration failed:', err));
+  });
+}
+</script>
+</body>
+</html>
