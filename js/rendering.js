@@ -659,6 +659,23 @@ const render = () => {
         }
 
         if (!isDocked) return;
+
+        if (e.key === "ArrowRight") {
+          const caretStart = textArea.selectionStart ?? 0;
+          const caretEnd = textArea.selectionEnd ?? caretStart;
+          const valueLength = textArea.value.length;
+          if (caretStart === valueLength && caretEnd === valueLength) {
+            e.preventDefault();
+            saveUndoState();
+            blocks[bi].data = `${textArea.value} `;
+            textArea.value = blocks[bi].data;
+            const newPos = valueLength + 1;
+            textArea.setSelectionRange(newPos, newPos);
+            save();
+          }
+          return;
+        }
+
         if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
 
         const caretCol = textArea.selectionStart ?? 0;
