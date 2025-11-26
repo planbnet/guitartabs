@@ -4,6 +4,70 @@
 const elEditor = document.getElementById("editor");
 const noteTooltip = document.getElementById("note-tooltip");
 
+const DOCKED_TEXT_COLUMN_OFFSET = 2;
+
+const tabColumnToTextColumn = (col) => {
+  const safeCol = clamp(col, 0, lineLength - 1);
+  return safeCol + DOCKED_TEXT_COLUMN_OFFSET;
+};
+
+const textColumnToTabColumn = (col) => {
+  const safeCol = Math.max(col - DOCKED_TEXT_COLUMN_OFFSET, 0);
+  return clamp(safeCol, 0, lineLength - 1);
+};
+
+const ensureDockedTextWidth = (blockIdx, textCol) => {
+  const block = blocks[blockIdx];
+  if (!block || !isTextBlock(block) || block.data.includes('\n')) return;
+  const requiredLength = Math.max(textCol, block.data.length);
+  if (block.data.length >= requiredLength) return;
+  saveUndoState();
+  block.data = block.data.padEnd(requiredLength, ' ');
+  const textArea = document.querySelector(`textarea[data-block="${blockIdx}"]`);
+  if (textArea) {
+    const scrollTop = textArea.scrollTop;
+    textArea.value = block.data;
+    textArea.scrollTop = scrollTop;
+  }
+  save();
+};
+
+const focusDockedTextLine = (blockIdx, col) => {
+  const textCol = tabColumnToTextColumn(col);
+  ensureDockedTextWidth(blockIdx, textCol);
+  const textArea = document.querySelector(`textarea[data-block="${blockIdx}"]`);
+  const targetTextCol = Math.min(textCol, lineLength - 1 + DOCKED_TEXT_COLUMN_OFFSET);
+  if (textArea) {
+    textArea.focus();
+    const pos = Math.min(targetTextCol, textArea.value.length);
+    textArea.setSelectionRange(pos, pos);
+  }
+  cur.block = blockIdx;
+  cur.stringIdx = 0;
+  cur.col = clamp(col, 0, lineLength - 1);
+  updateCursorOnly();
+  if (typeof hideNoteTooltip === "function") {
+    hideNoteTooltip();
+  }
+};
+
+const focusTabFromDockedText = (textIdx, col, direction) => {
+  const tabCol = textColumnToTabColumn(col);
+  if (direction === 'down') {
+    const tabIdx = getDockedTabForText(textIdx);
+    if (tabIdx !== -1) {
+      setCursor(tabIdx, 0, tabCol);
+      focusKeyboard();
+    }
+  } else if (direction === 'up') {
+    const prevTabIdx = findPreviousTabBlock(textIdx);
+    if (prevTabIdx !== -1) {
+      setCursor(prevTabIdx, 5, tabCol);
+      focusKeyboard();
+    }
+  }
+};
+
 // Tooltip state
 let tooltipTimeout = null;
 
@@ -517,6 +581,7 @@ const render = () => {
       textArea.setAttribute("autocomplete", "off");
       textArea.setAttribute("autocorrect", "off");
       textArea.setAttribute("autocapitalize", "off");
+      textArea.dataset.block = String(bi);
       
       // Auto-resize functionality
       const autoResize = () => {
@@ -590,6 +655,35 @@ const render = () => {
         if (e.key === "Tab") {
           e.preventDefault();
           toggleEditMode();
+          return;
+        }
+
+        if (!isDocked) return;
+        if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+
+        const caretCol = textArea.selectionStart ?? 0;
+        if (e.key === "ArrowDown") {
+          const tabIdx = getDockedTabForText(bi);
+          if (tabIdx !== -1) {
+            e.preventDefault();
+            clearSelection();
+            resetKeyboardSelectionAnchor();
+            if (typeof suppressNextArrowKeyNavigation === "function") {
+              suppressNextArrowKeyNavigation();
+            }
+            focusTabFromDockedText(bi, caretCol, "down");
+          }
+        } else if (e.key === "ArrowUp") {
+          const previousTabIdx = findPreviousTabBlock(bi);
+          if (previousTabIdx !== -1) {
+            e.preventDefault();
+            clearSelection();
+            resetKeyboardSelectionAnchor();
+            if (typeof suppressNextArrowKeyNavigation === "function") {
+              suppressNextArrowKeyNavigation();
+            }
+            focusTabFromDockedText(bi, caretCol, "up");
+          }
         }
       });
       

@@ -119,6 +119,33 @@ const ensureAtLeastOneBlock = () => {
 
 const isTabBlock = (block) => block && block.type === 'tab';
 const isTextBlock = (block) => block && block.type === 'text';
+const isDockedTextBlock = (index) => {
+  if (index < 0 || index >= blocks.length) return false;
+  const block = blocks[index];
+  if (!isTextBlock(block)) return false;
+  if (block.data.includes('\n')) return false;
+  const nextBlock = blocks[index + 1];
+  return !!nextBlock && isTabBlock(nextBlock);
+};
+
+const getDockedTextBeforeTab = (tabIdx) => {
+  const prevIdx = tabIdx - 1;
+  if (prevIdx < 0) return -1;
+  return isDockedTextBlock(prevIdx) ? prevIdx : -1;
+};
+
+const getDockedTabForText = (textIdx) => {
+  const nextIdx = textIdx + 1;
+  if (nextIdx >= blocks.length) return -1;
+  return isTabBlock(blocks[nextIdx]) ? nextIdx : -1;
+};
+
+const findPreviousTabBlock = (startIdx) => {
+  for (let i = startIdx - 1; i >= 0; i--) {
+    if (isTabBlock(blocks[i])) return i;
+  }
+  return -1;
+};
 
 // Block Creation
 const makeEmptyBlock = (L) => {

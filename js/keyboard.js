@@ -9,6 +9,14 @@ const focusKeyboard = () => {
   elKbd.focus({ preventScroll: true });
 };
 
+let suppressNextArrowNavigation = false;
+const suppressNextArrowKeyNavigation = () => {
+  suppressNextArrowNavigation = true;
+  setTimeout(() => {
+    suppressNextArrowNavigation = false;
+  }, 0);
+};
+
 // Check if key is printable
 const isPrintable = (e) => {
   // Allow single characters even with Alt key (needed for special chars on Mac/international keyboards)
@@ -21,6 +29,11 @@ const isPrintable = (e) => {
 
 // Main keyboard event handler
 const onKeyDown = (e) => {
+  if (suppressNextArrowNavigation && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+    suppressNextArrowNavigation = false;
+    return;
+  }
+
   // Don't intercept keyboard events when a textarea is focused
   if (document.activeElement && (
     document.activeElement.classList.contains('text-content') ||
@@ -92,6 +105,14 @@ const onKeyDown = (e) => {
       if (!isTabBlock(blocks[cur.block])) {
         moveCursor(dBlock, dString, dCol);
         return;
+      }
+
+      if (dString === -1 && cur.stringIdx === 0) {
+        const dockedTextIdx = getDockedTextBeforeTab(cur.block);
+        if (dockedTextIdx !== -1) {
+          focusDockedTextLine(dockedTextIdx, cur.col);
+          return;
+        }
       }
       
       // Handle right arrow at the end of line
