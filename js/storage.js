@@ -172,6 +172,11 @@ const parseImportedContent = (content) => {
       }
 
       if (textLines.length > 0) {
+        // Trim leading empty lines
+        while (textLines.length > 0 && textLines[0].trim() === '') {
+          textLines.shift();
+        }
+
         // Check if there's a tab block following
         const hasTabAfter = (i + 5 < lines.length && isTabSequence(lines.slice(i, i + 6)));
 
