@@ -4,7 +4,7 @@
 const elEditor = document.getElementById("editor");
 const noteTooltip = document.getElementById("note-tooltip");
 
-const CHORD_REGEX = /\b([A-G](?:#|b)?(?:m|maj|min|dim|aug|sus)?(?:\d{0,2})(?:(?:add|sus)\d+)?(?:(?:\/|\\)[A-G](?:#|b)?)?)\b/g;
+const CHORD_REGEX = /\b([A-G](?:#|b)?(?:m|maj|min|dim|aug|sus)?(?:\d{0,2})(?:(?:b|#)\d+)?(?:(?:add|sus)\d+)?(?:(?:\/|\\)[A-G](?:#|b)?)?)\b/g;
 
 const renderDockedTextDisplay = (text) => {
   const escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -155,6 +155,158 @@ const hideNoteTooltip = () => {
 // Chord Popup
 const chordPopup = document.getElementById("chord-popup");
 let activeChordElement = null;
+let currentChordPositions = [];
+let currentChordPositionIndex = 0;
+
+const findChordData = (chordName) => {
+  if (typeof CHORDS_DB === 'undefined') return null;
+
+  // Normalize chord name
+  let key = null;
+  let suffix = null;
+
+  // Try to match key (longest match first, e.g., C# vs C)
+  const keys = CHORDS_DB.keys;
+  // Sort keys by length descending to match C# before C
+  const sortedKeys = [...keys].sort((a, b) => b.length - a.length);
+
+  for (const k of sortedKeys) {
+    if (chordName.startsWith(k)) {
+      key = k;
+      suffix = chordName.slice(k.length);
+      break;
+    }
+  }
+
+  if (!key) return null;
+
+  // Normalize suffix for simple cases only
+  if (suffix === "" || suffix === "maj") {
+    suffix = "major";
+  } else if (suffix === "m" || suffix === "min") {
+    suffix = "minor";
+  } // leave other complex suffixes (e.g., "m7b5") unchanged
+
+  // Look up in DB
+  const chords = CHORDS_DB.chords[key];
+  if (!chords) return null;
+
+  const chord = chords.find(c => c.suffix === suffix);
+  return chord ? chord.positions : null; // Return all positions
+};
+
+const renderChordDiagram = (container, position) => {
+  if (typeof vexchords === 'undefined') {
+    container.innerHTML += '<div style="color:var(--danger)">vexchords library not loaded</div>';
+    return;
+  }
+
+  // Clear previous diagram
+  container.innerHTML = '';
+
+  // Convert chords-db position to vexchords chord
+  // chords-db frets: [6, 5, 4, 3, 2, 1] (strings)
+  // -1 means muted (x), 0 means open
+
+  const chord = [];
+  const barres = [];
+
+  position.frets.forEach((fret, index) => {
+    const string = 6 - index; // Convert 0-based index (low E) to 1-based string (6=low E, 1=high E) ? 
+    // Wait, vexchords usually uses 1 for high E, 6 for low E.
+    // chords-db index 0 is string 6 (Low E).
+    // So index 0 -> string 6
+    // index 5 -> string 1
+
+    if (fret === -1) {
+      chord.push([string, 'x']);
+    } else if (fret === 0) {
+      // Open string, usually handled automatically or explicitly
+      // vexchords might not need explicit open string if not barred?
+      // Let's push it as 0
+      chord.push([string, 0]);
+    } else {
+      chord.push([string, fret]);
+    }
+  });
+
+  // Handle barres
+  if (position.barres) {
+    position.barres.forEach(fret => {
+      // Find strings covered by barre
+      // chords-db doesn't explicitly say which strings, usually it's "from string X to Y"
+      // But here 'barres' is just an array of fret numbers [1] or [3].
+      // We need to infer which strings are barred.
+      // Usually it covers all strings that have that fret.
+      // Simplification: Barre usually covers from lowest string with that fret to highest.
+
+      let minString = 7;
+      let maxString = 0;
+      position.frets.forEach((f, i) => {
+        if (f === fret) {
+          const str = 6 - i;
+          if (str < minString) minString = str;
+          if (str > maxString) maxString = str;
+        }
+      });
+
+      if (maxString > 0) {
+        barres.push({ fromString: maxString, toString: minString, fret: fret });
+      }
+    });
+  }
+
+
+  vexchords.draw(container, {
+    chord: chord,
+    position: position.baseFret,
+    barres: barres,
+    tuning: ['E', 'A', 'D', 'G', 'B', 'E']
+  }, {
+    width: 120,
+    height: 140,
+    defaultColor: '#e6e6e6',
+    strokeColor: '#e6e6e6',
+    bgColor: 'transparent',
+    labelColor: '#e6e6e6'
+  });
+};
+
+const updateChordPopupContent = (chordName) => {
+  const headerHtml = `
+    <div class="chord-popup-header">
+      ${currentChordPositions.length > 1 ? '<span class="chord-arrow" id="prev-chord">&lt;</span>' : ''}
+      <h4>${chordName}</h4>
+      ${currentChordPositions.length > 1 ? '<span class="chord-arrow" id="next-chord">&gt;</span>' : ''}
+    </div>
+    ${currentChordPositions.length > 1 ? `<div class="chord-position-indicator">${currentChordPositionIndex + 1}/${currentChordPositions.length}</div>` : ''}
+    <div id="chord-diagram"></div>
+  `;
+
+  chordPopup.innerHTML = headerHtml;
+
+  const diagramContainer = chordPopup.querySelector('#chord-diagram');
+  if (currentChordPositions.length > 0) {
+    renderChordDiagram(diagramContainer, currentChordPositions[currentChordPositionIndex]);
+  } else {
+    diagramContainer.innerHTML = '<div style="font-size:13px; color:var(--muted);">Chord not found in DB</div>';
+  }
+
+  // Add event listeners for arrows
+  if (currentChordPositions.length > 1) {
+    document.getElementById('prev-chord').addEventListener('click', (e) => {
+      e.stopPropagation();
+      currentChordPositionIndex = (currentChordPositionIndex - 1 + currentChordPositions.length) % currentChordPositions.length;
+      updateChordPopupContent(chordName);
+    });
+
+    document.getElementById('next-chord').addEventListener('click', (e) => {
+      e.stopPropagation();
+      currentChordPositionIndex = (currentChordPositionIndex + 1) % currentChordPositions.length;
+      updateChordPopupContent(chordName);
+    });
+  }
+};
 
 const showChordPopup = (element, chordName) => {
   if (!chordPopup) return;
@@ -166,8 +318,11 @@ const showChordPopup = (element, chordName) => {
   }
 
   activeChordElement = element;
-  chordPopup.innerHTML = `<h4>${chordName}</h4><div style="font-size:13px; color:var(--muted);">Fretboard diagram placeholder</div>`;
+  currentChordPositions = findChordData(chordName) || [];
+  currentChordPositionIndex = 0;
+
   chordPopup.classList.add('visible');
+  updateChordPopupContent(chordName);
 
   const rect = element.getBoundingClientRect();
   const popupRect = chordPopup.getBoundingClientRect();

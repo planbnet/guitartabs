@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "@tombatossals/chords-db": "^0.5.1",
-    "vexchords": "^1.2.0"
-  }
-}

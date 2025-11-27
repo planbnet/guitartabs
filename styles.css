@@ -562,25 +562,57 @@ body {
 #chord-popup {
   position: fixed;
   background: var(--card);
-  color: var(--fg);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 1rem;
-  font-family: var(--mono);
+  border-radius: 6px;
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   z-index: 1000;
   display: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, .5);
   min-width: 150px;
+  text-align: center;
+}
+
+  {
+    {
+    ...
+  }
 }
 
 #chord-popup.visible {
   display: block;
+  animation: fadeIn 0.1s ease-out;
 }
 
-#chord-popup h4 {
-  margin: 0 0 .5rem 0;
+.chord-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.chord-popup-header h4 {
+  margin: 0;
   color: var(--accent);
   font-size: 16px;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: .25rem;
+  flex-grow: 1;
+}
+
+.chord-arrow {
+  cursor: pointer;
+  padding: 0 4px;
+  color: var(--muted);
+  font-weight: bold;
+  user-select: none;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.chord-arrow:hover {
+  color: var(--fg);
+}
+
+.chord-position-indicator {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 4px;
 }

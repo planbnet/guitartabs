@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>ASCII Guitar Tab Editor</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ASCII Guitar Tab Editor</title>
 
-<!-- PWA Configuration -->
-<link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#2a2a2a" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="Tab Editor" />
-<link rel="apple-touch-icon" href="icon-192.png" />
+  <!-- PWA Configuration -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#2a2a2a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Tab Editor" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
 
-<link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
   <div class="toolbar">
     <button id="btn-new-line" class="primary">Add Tab</button>
@@ -25,7 +27,8 @@
     <button id="btn-clear" class="danger">Clear</button>
     <button id="btn-legend" class="align-right">Legend</button>
     <button id="btn-settings" class="secondary">Settings</button>
-    <input id="inp-len" type="number" min="50" max="120" step="1" value="80" class="hidden-control" aria-hidden="true" />
+    <input id="inp-len" type="number" min="50" max="120" step="1" value="80" class="hidden-control"
+      aria-hidden="true" />
   </div>
 
   <div id="settings-modal" class="modal" role="dialog" aria-modal="true">
@@ -56,7 +59,7 @@
           <button id="text-import-clipboard" class="btn">Import Clipboard</button>
         </div>
         <div class="text-modal-right">
-        <button id="text-cancel" class="btn">Close</button>
+          <button id="text-cancel" class="btn">Close</button>
           <button id="text-update" class="btn primary">Update</button>
         </div>
       </div>
@@ -82,13 +85,13 @@
         <button class="legend-btn" data-symbol="p">p = pull-off (e.g., 3p0)</button>
         <button class="legend-btn" data-symbol="b">b = bend (e.g., 7b9)</button>
         <button class="legend-btn" data-symbol="r">r = bend release (e.g., 9r7)</button>
-        <button class="legend-btn" data-symbol="/">/  = slide up (e.g., 5/7)</button>
-        <button class="legend-btn" data-symbol="\">\  = slide down (e.g., 7\5)</button>
-        <button class="legend-btn" data-symbol="~">~  = vibrato (e.g., 12~~~)</button>
-        <button class="legend-btn" data-symbol="x">x  = dead note (muted)</button>
-        <button class="legend-btn" data-symbol="|">|  = bar / divider</button>
-        <button class="legend-btn" data-symbol="(">(  = bend start (e.g., 5(7))</button>
-        <button class="legend-btn" data-symbol=")">)  = bend end</button>
+        <button class="legend-btn" data-symbol="/">/ = slide up (e.g., 5/7)</button>
+        <button class="legend-btn" data-symbol="\">\ = slide down (e.g., 7\5)</button>
+        <button class="legend-btn" data-symbol="~">~ = vibrato (e.g., 12~~~)</button>
+        <button class="legend-btn" data-symbol="x">x = dead note (muted)</button>
+        <button class="legend-btn" data-symbol="|">| = bar / divider</button>
+        <button class="legend-btn" data-symbol="(">( = bend start (e.g., 5(7))</button>
+        <button class="legend-btn" data-symbol=")">) = bend end</button>
       </div>
       <div class="legend-info">
         <p><strong>Tips:</strong>
@@ -103,28 +106,31 @@
     </div>
   </div>
 
-<!-- Note tooltip -->
-<div id="note-tooltip"></div>
-<div id="chord-popup"></div>
+  <!-- Note tooltip -->
+  <div id="note-tooltip"></div>
+  <div id="chord-popup"></div>
 
-<!-- Include JavaScript modules in dependency order -->
-<script src="js/state.js"></script>
-<script src="js/storage.js"></script>
-<script src="js/rendering.js"></script>
-<script src="js/editing.js"></script>
-<script src="js/keyboard.js"></script>
-<script src="js/ui-interactions.js"></script>
-<script src="js/main.js"></script>
+  <!-- Include JavaScript modules in dependency order -->
+  <script src="js/vendor/vexchords.js"></script>
+  <script src="js/vendor/chords-db.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/rendering.js"></script>
+  <script src="js/editing.js"></script>
+  <script src="js/keyboard.js"></script>
+  <script src="js/ui-interactions.js"></script>
+  <script src="js/main.js"></script>
 
-<!-- PWA Service Worker Registration -->
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./js/sw.js')
-      .then(reg => console.log('Service Worker registered'))
-      .catch(err => console.log('Service Worker registration failed:', err));
-  });
-}
-</script>
+  <!-- PWA Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./js/sw.js')
+          .then(reg => console.log('Service Worker registered'))
+          .catch(err => console.log('Service Worker registration failed:', err));
+      });
+    }
+  </script>
 </body>
+
 </html>
