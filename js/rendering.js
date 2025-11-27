@@ -4,6 +4,13 @@
 const elEditor = document.getElementById("editor");
 const noteTooltip = document.getElementById("note-tooltip");
 
+const CHORD_REGEX = /\b([A-G](?:#|b)?(?:m|maj|min|dim|aug|sus)?(?:\d{0,2})(?:(?:add|sus)\d+)?(?:(?:\/|\\)[A-G](?:#|b)?)?)\b/g;
+
+const renderDockedTextDisplay = (text) => {
+  const escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return escaped.replace(CHORD_REGEX, '<span class="chord" data-chord="$1">$1</span>');
+};
+
 const DOCKED_TEXT_COLUMN_OFFSET = 2;
 
 const tabColumnToTextColumn = (col) => {
@@ -35,6 +42,10 @@ const ensureDockedTextWidth = (blockIdx, textCol) => {
 const focusDockedTextLine = (blockIdx, col) => {
   const textCol = tabColumnToTextColumn(col);
   ensureDockedTextWidth(blockIdx, textCol);
+
+  const blockEl = elEditor.children[blockIdx];
+  if (blockEl) blockEl.classList.add('editing');
+
   const textArea = document.querySelector(`textarea[data-block="${blockIdx}"]`);
   const targetTextCol = Math.min(textCol, lineLength - 1 + DOCKED_TEXT_COLUMN_OFFSET);
   if (textArea) {
@@ -75,61 +86,61 @@ let tooltipTimeout = null;
 const getFretNumberAtCell = (blockIdx, stringIdx, col) => {
   const block = blocks[blockIdx];
   if (!isTabBlock(block)) return null;
-  
+
   const row = block.data[stringIdx];
   const char = row[col];
-  
+
   // Check if current cell is a digit
   if (!/\d/.test(char)) return null;
-  
+
   // Find the start of the number (look left for more digits)
   let startCol = col;
   while (startCol > 0 && /\d/.test(row[startCol - 1])) {
     startCol--;
   }
-  
+
   // Find the end of the number (look right for more digits)
   let endCol = col;
   while (endCol < lineLength - 1 && /\d/.test(row[endCol + 1])) {
     endCol++;
   }
-  
+
   const length = endCol - startCol + 1;
-  
+
   // If more than 2 digits, treat each digit individually
   if (length > 2) {
     const fret = parseInt(char, 10);
     return isNaN(fret) ? null : fret;
   }
-  
+
   // Extract the full number (1-2 digits)
   let numStr = '';
   for (let i = startCol; i <= endCol; i++) {
     numStr += row[i];
   }
-  
+
   const fret = parseInt(numStr, 10);
   if (isNaN(fret)) return null;
-  
+
   // If the number is > 36, treat each digit individually
   if (fret > 36) {
     const singleFret = parseInt(char, 10);
     return isNaN(singleFret) ? null : singleFret;
   }
-  
+
   return fret;
 };
 
 // Show note tooltip
 const showNoteTooltip = (cell, stringIdx, fret) => {
   if (!noteTooltip) return;
-  
+
   const note = calculateNote(stringIdx, fret);
   if (!note) return;
-  
+
   noteTooltip.textContent = note;
   noteTooltip.classList.add('visible');
-  
+
   const rect = cell.getBoundingClientRect();
   noteTooltip.style.left = `${rect.left + rect.width / 2 - noteTooltip.offsetWidth / 2}px`;
   noteTooltip.style.top = `${rect.top - noteTooltip.offsetHeight - 8}px`;
@@ -140,6 +151,52 @@ const hideNoteTooltip = () => {
   if (!noteTooltip) return;
   noteTooltip.classList.remove('visible');
 };
+
+// Chord Popup
+const chordPopup = document.getElementById("chord-popup");
+let activeChordElement = null;
+
+const showChordPopup = (element, chordName) => {
+  if (!chordPopup) return;
+
+  // If clicking the same chord, toggle it off
+  if (activeChordElement === element && chordPopup.classList.contains('visible')) {
+    hideChordPopup();
+    return;
+  }
+
+  activeChordElement = element;
+  chordPopup.innerHTML = `<h4>${chordName}</h4><div style="font-size:13px; color:var(--muted);">Fretboard diagram placeholder</div>`;
+  chordPopup.classList.add('visible');
+
+  const rect = element.getBoundingClientRect();
+  const popupRect = chordPopup.getBoundingClientRect();
+
+  // Position above the chord
+  let top = rect.top - popupRect.height - 8;
+  let left = rect.left + (rect.width / 2) - (popupRect.width / 2);
+
+  // Keep within viewport
+  if (left < 10) left = 10;
+  if (left + popupRect.width > window.innerWidth - 10) left = window.innerWidth - popupRect.width - 10;
+  if (top < 10) top = rect.bottom + 8; // Flip to bottom if not enough space on top
+
+  chordPopup.style.top = `${top}px`;
+  chordPopup.style.left = `${left}px`;
+};
+
+const hideChordPopup = () => {
+  if (!chordPopup) return;
+  chordPopup.classList.remove('visible');
+  activeChordElement = null;
+};
+
+// Close popup when clicking elsewhere
+document.addEventListener('click', (e) => {
+  if (!chordPopup || !chordPopup.classList.contains('visible')) return;
+  if (e.target.closest('#chord-popup') || e.target.classList.contains('chord')) return;
+  hideChordPopup();
+});
 
 const selectionClassNames = ["sel", "sel-top", "sel-bottom", "sel-left", "sel-right", "sel-corner-tl", "sel-corner-tr", "sel-corner-bl", "sel-corner-br"];
 const selectionClassSelector = selectionClassNames.map(cls => `.ch.${cls}`).join(", ");
@@ -341,6 +398,7 @@ const handleCellMouseDown = (blockIdx, stringIdx, col, event) => {
   startSelectionGesture(blockIdx, stringIdx, col, "mouse", { immediate: false });
   clearSelection();
   refreshClipboardButtons();
+  hideChordPopup();
 };
 
 const handleCellTouchStart = (blockIdx, stringIdx, col, event) => {
@@ -357,12 +415,12 @@ const handleCellTouchStart = (blockIdx, stringIdx, col, event) => {
 
 const updateCursorOnly = () => {
   if (!elEditor) return;
-  
+
   document.querySelectorAll(".cursor").forEach(el => el.classList.remove("cursor"));
-  
+
   const blockEl = elEditor.children[cur.block];
   if (!blockEl) return;
-  
+
   const currentBlock = blocks[cur.block];
   if (isTabBlock(currentBlock)) {
     // Get all .line elements and select the correct one by index
@@ -382,15 +440,15 @@ const updateCursorOnly = () => {
 const render = () => {
   if (!elEditor) return;
   elEditor.innerHTML = "";
-  
+
   blocks.forEach((block, bi) => {
     const blockEl = document.createElement("div");
     blockEl.className = "block";
-    
+
     if (isTabBlock(block)) {
       // Render tab block
       blockEl.className += " tab-block";
-      
+
       // Check if previous block is a docked text block
       const prevBlock = blocks[bi - 1];
       if (prevBlock && isTextBlock(prevBlock) && !prevBlock.data.includes('\n')) {
@@ -421,7 +479,7 @@ const render = () => {
         e.stopPropagation();
         const bounds = getSelectionBounds();
         const hasSelection = bounds && bounds.block === bi;
-        
+
         if (editMode === 'shift' && !hasSelection) {
           // In shift mode without selection, delete entire column
           deleteSelectionOrChar(bi, { allStrings: true, targetRow: cur.stringIdx });
@@ -484,10 +542,10 @@ const render = () => {
         const stringEl = document.createElement("div");
         stringEl.className = "line";
         stringEl.innerHTML = `<span class="label">${tunings[stringIdx]}|</span>`;
-        
+
         const charsContainer = document.createElement("div");
         charsContainer.className = "chars";
-        
+
         for (let col = 0; col < lineLength; col++) {
           const s = document.createElement("span");
           s.className = "ch";
@@ -497,9 +555,10 @@ const render = () => {
           s.textContent = block.data[stringIdx][col];
           s.addEventListener("click", (e) => {
             e.stopPropagation();
+            hideChordPopup();
             setCursor(bi, stringIdx, col);
             focusKeyboard();
-            
+
             // Show note tooltip if hovering over a digit
             const fret = getFretNumberAtCell(bi, stringIdx, col);
             if (fret !== null) {
@@ -522,26 +581,26 @@ const render = () => {
           });
           s.addEventListener("mousedown", (e) => handleCellMouseDown(bi, stringIdx, col, e));
           s.addEventListener("touchstart", (e) => handleCellTouchStart(bi, stringIdx, col, e), { passive: true });
-          
+
           charsContainer.appendChild(s);
         }
-        
+
         stringEl.appendChild(charsContainer);
         blockEl.appendChild(stringEl);
       }
     } else if (isTextBlock(block)) {
       // Render text block
       blockEl.className += " text-block";
-      
+
       // Check if this is a single-line text block followed by a tab block
       const isSingleLine = !block.data.includes('\n');
       const nextBlock = blocks[bi + 1];
       const isDocked = isSingleLine && nextBlock && isTabBlock(nextBlock);
-      
+
       if (isDocked) {
         blockEl.className += " docked-text";
       }
-      
+
       if (blocks.length > 1) {
         const controls = document.createElement("div");
         controls.className = "block-controls";
@@ -571,7 +630,7 @@ const render = () => {
         controls.appendChild(moveDownBtn);
         blockEl.appendChild(controls);
       }
-      
+
       const textArea = document.createElement("textarea");
       textArea.className = "text-content";
       textArea.value = block.data;
@@ -582,7 +641,45 @@ const render = () => {
       textArea.setAttribute("autocorrect", "off");
       textArea.setAttribute("autocapitalize", "off");
       textArea.dataset.block = String(bi);
-      
+
+      const displayDiv = document.createElement("div");
+      displayDiv.className = "docked-text-display";
+      displayDiv.innerHTML = renderDockedTextDisplay(block.data);
+
+      displayDiv.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (e.target.classList.contains("chord")) {
+          const chordName = e.target.dataset.chord;
+          showChordPopup(e.target, chordName);
+        } else {
+          hideChordPopup();
+          blockEl.classList.add('editing');
+          textArea.focus();
+
+          // Attempt to set cursor position based on click
+          // This is approximate since we are clicking a different element
+          const rect = displayDiv.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const charWidth = 9.6; // Approximate width of monospaced char at 16px
+          const col = Math.floor(x / charWidth);
+          const pos = Math.min(Math.max(0, col), textArea.value.length);
+          textArea.setSelectionRange(pos, pos);
+        }
+      });
+
+      textArea.addEventListener("blur", () => {
+        displayDiv.innerHTML = renderDockedTextDisplay(textArea.value);
+        setTimeout(() => {
+          blockEl.classList.remove('editing');
+        }, 100);
+      });
+
+      if (cur.block === bi) {
+        blockEl.classList.add('editing');
+      }
+
+      blockEl.appendChild(displayDiv);
+
       // Auto-resize functionality
       const autoResize = () => {
         if (isDocked) {
@@ -595,15 +692,15 @@ const render = () => {
           minHeight = 42;
         }
         const desired = Math.max(minHeight, textArea.scrollHeight);
-        textArea.style.height = `${desired}px`;
+        textArea.style.height = `${desired} px`;
       };
-      
+
       let textInputTimeout;
       let previousHadNewline = block.data.includes('\n');
-      
+
       textArea.addEventListener("input", (e) => {
         blocks[bi].data = e.target.value;
-        
+
         // Check if newline state changed (affects docking)
         const currentHasNewline = e.target.value.includes('\n');
         if (currentHasNewline !== previousHadNewline) {
@@ -626,9 +723,9 @@ const render = () => {
         } else {
           autoResize();
         }
-        
+
         save();
-        
+
         // Debounced undo state saving for text input
         clearTimeout(textInputTimeout);
         textInputTimeout = setTimeout(() => {
@@ -637,7 +734,7 @@ const render = () => {
           }
         }, 1000); // Save undo state 1 second after user stops typing
       });
-      
+
       textArea.addEventListener("focus", (e) => {
         cur.block = bi;
         cur.stringIdx = 0;
@@ -645,7 +742,7 @@ const render = () => {
         updateCursorOnly();
         save();
       });
-      
+
       textArea.addEventListener("click", (e) => {
         e.stopPropagation();
         textArea.focus();
@@ -703,7 +800,7 @@ const render = () => {
           }
         }
       });
-      
+
       // Auto-resize on initial render
       requestAnimationFrame(() => {
         autoResize();
@@ -711,9 +808,9 @@ const render = () => {
           textArea.focus();
         }
       });
-      
-    blockEl.appendChild(textArea);
-  }
+
+      blockEl.appendChild(textArea);
+    }
 
     const blockRemoveBtn = document.createElement("button");
     blockRemoveBtn.className = "block-remove-handle";
@@ -729,10 +826,10 @@ const render = () => {
       deleteBlock(bi);
     });
     blockEl.appendChild(blockRemoveBtn);
-  
-  elEditor.appendChild(blockEl);
+
+    elEditor.appendChild(blockEl);
   });
-  
+
   updateCursorOnly();
   updateSelectionHighlight();
   refreshClipboardButtons();
