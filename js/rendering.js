@@ -946,16 +946,23 @@ const render = () => {
         } else {
           hideChordPopup();
           blockEl.classList.add('editing');
+
+          const rect = displayDiv.getBoundingClientRect();
+          const x = Math.max(0, e.clientX - rect.left);
+          const charWidth = 9.6; // Approximate width of monospaced char at 16px
+          const rawCol = Math.floor(x / charWidth);
+          const maxTextCol = lineLength - 1 + DOCKED_TEXT_COLUMN_OFFSET;
+          const targetCol = clamp(rawCol, 0, maxTextCol);
+
+          ensureDockedTextWidth(bi, targetCol);
+          textArea.value = blocks[bi].data;
           textArea.focus();
 
-          // Attempt to set cursor position based on click
-          // This is approximate since we are clicking a different element
-          const rect = displayDiv.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const charWidth = 9.6; // Approximate width of monospaced char at 16px
-          const col = Math.floor(x / charWidth);
-          const pos = Math.min(Math.max(0, col), textArea.value.length);
-          textArea.setSelectionRange(pos, pos);
+          requestAnimationFrame(() => {
+            const textLength = textArea.value.length;
+            const pos = clamp(targetCol, 0, textLength);
+            textArea.setSelectionRange(pos, pos);
+          });
         }
       });
 
