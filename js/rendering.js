@@ -6,9 +6,26 @@ const noteTooltip = document.getElementById("note-tooltip");
 
 const CHORD_REGEX = /\b([A-G](?:#|b)?(?:m|maj|min|dim|aug|sus)?(?:\d{0,2})(?:(?:b|#)\d+)?(?:(?:add|sus)\d+)?(?:(?:\/|\\)[A-G](?:#|b)?)?)\b/g;
 
-const renderDockedTextDisplay = (text) => {
-  const escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  return escaped.replace(CHORD_REGEX, '<span class="chord" data-chord="$1">$1</span>');
+const escapeHtml = (value) => value
+  .replace(/&/g, "&amp;")
+  .replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;");
+
+const renderDockedTextDisplay = (text, blockIdx = null) => {
+  let lastIndex = 0;
+  let out = "";
+
+  text.replace(CHORD_REGEX, (match, chordName, offset) => {
+    out += escapeHtml(text.slice(lastIndex, offset));
+    const textCol = offset;
+    const blockAttr = Number.isInteger(blockIdx) ? ` data-block="${blockIdx}"` : "";
+    out += `<span class="chord"${blockAttr} data-text-col="${textCol}" data-chord="${chordName}">${escapeHtml(match)}</span>`;
+    lastIndex = offset + match.length;
+    return match;
+  });
+
+  out += escapeHtml(text.slice(lastIndex));
+  return out;
 };
 
 const DOCKED_TEXT_COLUMN_OFFSET = 2;
@@ -158,6 +175,105 @@ let activeChordElement = null;
 let currentChordPositions = [];
 let currentChordPositionIndex = 0;
 
+const getActiveChordInsertContext = () => {
+  if (!activeChordElement) return null;
+  const blockAttr = activeChordElement.dataset.block;
+  if (blockAttr == null) return null;
+  const textBlockIdx = parseInt(blockAttr, 10);
+  if (Number.isNaN(textBlockIdx)) return null;
+  const tabBlockIdx = getDockedTabForText(textBlockIdx);
+  if (tabBlockIdx === -1) return null;
+  const textColRaw = parseInt(activeChordElement.dataset.textCol ?? "0", 10);
+  const textCol = Number.isNaN(textColRaw) ? 0 : textColRaw;
+  const tabCol = textColumnToTabColumn(textCol);
+  return { textBlockIdx, tabBlockIdx, tabCol };
+};
+
+const formatChordPositionForTab = (position) => {
+  if (!position || !Array.isArray(position.frets)) return null;
+  const frets = position.frets.slice();
+  while (frets.length < 6) frets.push(-1);
+  const baseFret = Math.max(position.baseFret || 1, 1);
+  const rows = [];
+  for (let i = 0; i < 6; i++) {
+    const fretVal = frets[5 - i];
+    if (typeof fretVal !== "number") {
+      rows.push("");
+      continue;
+    }
+    if (fretVal < 0) {
+      rows.push("x");
+      continue;
+    }
+    if (fretVal === 0) {
+      rows.push("0");
+      continue;
+    }
+    const absoluteFret = fretVal + baseFret - 1;
+    rows.push(String(Math.max(absoluteFret, 0)));
+  }
+  const width = Math.max(1, ...rows.map(val => val.length || 0));
+  return { rows, width };
+};
+
+const canInsertChordAtActivePosition = () => {
+  const hasShape = currentChordPositions.length > 0;
+  if (!hasShape) return false;
+  return !!getActiveChordInsertContext();
+};
+
+const insertActiveChordFingering = () => {
+  const chordPosition = currentChordPositions[currentChordPositionIndex];
+  if (!chordPosition) return;
+  const context = getActiveChordInsertContext();
+  if (!context) return;
+  const chordData = formatChordPositionForTab(chordPosition);
+  if (!chordData || chordData.width <= 0) return;
+  const tabBlock = blocks[context.tabBlockIdx];
+  if (!tabBlock || !isTabBlock(tabBlock)) return;
+
+  saveUndoState();
+  clearSelection();
+
+  const maxStart = Math.max(0, lineLength - chordData.width);
+  let startCol = clamp(context.tabCol, 0, lineLength - 1);
+  startCol = clamp(startCol, 0, maxStart);
+
+  const clearArea = () => {
+    for (let s = 0; s < 6; s++) {
+      for (let c = 0; c < chordData.width; c++) {
+        if (startCol + c < lineLength) {
+          tabBlock.data[s][startCol + c] = "-";
+        }
+      }
+    }
+  };
+
+  if (editMode === "replace") {
+    clearArea();
+  } else if (typeof shiftBlockForInsert === "function") {
+    shiftBlockForInsert(tabBlock, startCol, chordData.width);
+  } else {
+    clearArea();
+  }
+
+  chordData.rows.forEach((value, stringIdx) => {
+    const row = tabBlock.data[stringIdx];
+    if (!row) return;
+    for (let i = 0; i < value.length && startCol + i < lineLength; i++) {
+      row[startCol + i] = value[i];
+    }
+  });
+
+  setCursor(context.tabBlockIdx, 0, startCol);
+  render();
+  save();
+  if (typeof focusKeyboard === "function") {
+    focusKeyboard();
+  }
+  hideChordPopup();
+};
+
 const findChordData = (chordName) => {
   if (typeof CHORDS_DB === 'undefined') return null;
 
@@ -273,6 +389,7 @@ const renderChordDiagram = (container, position) => {
 };
 
 const updateChordPopupContent = (chordName) => {
+  const canInsert = canInsertChordAtActivePosition();
   const headerHtml = `
     <div class="chord-popup-header">
       ${currentChordPositions.length > 1 ? '<span class="chord-arrow" id="prev-chord">&lt;</span>' : ''}
@@ -281,6 +398,7 @@ const updateChordPopupContent = (chordName) => {
     </div>
     ${currentChordPositions.length > 1 ? `<div class="chord-position-indicator">${currentChordPositionIndex + 1}/${currentChordPositions.length}</div>` : ''}
     <div id="chord-diagram"></div>
+    <button id="chord-insert-btn" class="btn chord-insert-btn"${canInsert ? '' : ' disabled'}>Insert</button>
   `;
 
   chordPopup.innerHTML = headerHtml;
@@ -304,6 +422,21 @@ const updateChordPopupContent = (chordName) => {
       e.stopPropagation();
       currentChordPositionIndex = (currentChordPositionIndex + 1) % currentChordPositions.length;
       updateChordPopupContent(chordName);
+    });
+  }
+
+  const insertBtn = document.getElementById('chord-insert-btn');
+  if (insertBtn) {
+    if (!canInsert) {
+      insertBtn.title = currentChordPositions.length === 0
+        ? "No chord shape available to insert"
+        : "Add a tab block below this text line to insert";
+    }
+    insertBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!insertBtn.disabled) {
+        insertActiveChordFingering();
+      }
     });
   }
 };
@@ -799,7 +932,7 @@ const render = () => {
 
       const displayDiv = document.createElement("div");
       displayDiv.className = "docked-text-display";
-      displayDiv.innerHTML = renderDockedTextDisplay(block.data);
+      displayDiv.innerHTML = renderDockedTextDisplay(block.data, bi);
 
       displayDiv.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -823,7 +956,7 @@ const render = () => {
       });
 
       textArea.addEventListener("blur", () => {
-        displayDiv.innerHTML = renderDockedTextDisplay(textArea.value);
+        displayDiv.innerHTML = renderDockedTextDisplay(textArea.value, bi);
         setTimeout(() => {
           blockEl.classList.remove('editing');
         }, 100);
