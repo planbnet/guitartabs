@@ -30,6 +30,36 @@ const renderDockedTextDisplay = (text, blockIdx = null) => {
 
 const DOCKED_TEXT_COLUMN_OFFSET = 2;
 
+const charWidthCache = new Map();
+const getCharWidthForElement = (el) => {
+  if (!el) return 9.6;
+  const styles = window.getComputedStyle(el);
+  const key = [
+    styles.fontFamily,
+    styles.fontSize,
+    styles.fontWeight,
+    styles.fontStyle,
+    styles.letterSpacing
+  ].join("|");
+  if (charWidthCache.has(key)) return charWidthCache.get(key);
+  const probe = document.createElement("span");
+  probe.textContent = "0";
+  probe.style.position = "absolute";
+  probe.style.visibility = "hidden";
+  probe.style.pointerEvents = "none";
+  probe.style.whiteSpace = "pre";
+  probe.style.fontFamily = styles.fontFamily;
+  probe.style.fontSize = styles.fontSize;
+  probe.style.fontWeight = styles.fontWeight;
+  probe.style.fontStyle = styles.fontStyle;
+  probe.style.letterSpacing = styles.letterSpacing;
+  document.body.appendChild(probe);
+  const width = probe.getBoundingClientRect().width || 9.6;
+  document.body.removeChild(probe);
+  charWidthCache.set(key, width);
+  return width;
+};
+
 const tabColumnToTextColumn = (col) => {
   const safeCol = clamp(col, 0, lineLength - 1);
   return safeCol + DOCKED_TEXT_COLUMN_OFFSET;
@@ -943,32 +973,26 @@ const render = () => {
         if (e.target.classList.contains("chord")) {
           const chordName = e.target.dataset.chord;
           showChordPopup(e.target, chordName);
-        } else {
-          hideChordPopup();
-          blockEl.classList.add('editing');
-
-          const rect = displayDiv.getBoundingClientRect();
-          const x = Math.max(0, e.clientX - rect.left);
-          const charWidth = 9.6; // Approximate width of monospaced char at 16px
-          const rawCol = Math.floor(x / charWidth);
-          const maxTextCol = lineLength - 1 + DOCKED_TEXT_COLUMN_OFFSET;
-          const targetCol = clamp(rawCol, 0, maxTextCol);
-
-          ensureDockedTextWidth(bi, targetCol);
-          textArea.value = blocks[bi].data;
-          textArea.focus();
-
-          requestAnimationFrame(() => {
-            const textLength = textArea.value.length;
-            const pos = clamp(targetCol, 0, textLength);
-            textArea.setSelectionRange(pos, pos);
-          });
+          return;
         }
+
+        hideChordPopup();
+
+        const rect = displayDiv.getBoundingClientRect();
+        const x = Math.max(0, e.clientX - rect.left);
+        const charWidth = getCharWidthForElement(displayDiv) || 9.6;
+        const rawCol = Math.floor(x / charWidth);
+        const maxTextCol = lineLength - 1 + DOCKED_TEXT_COLUMN_OFFSET;
+        const textCol = clamp(rawCol, 0, maxTextCol);
+        const tabCol = textColumnToTabColumn(textCol);
+
+        focusDockedTextLine(bi, tabCol);
       });
 
       textArea.addEventListener("blur", () => {
         displayDiv.innerHTML = renderDockedTextDisplay(textArea.value, bi);
         setTimeout(() => {
+          if (document.activeElement === textArea) return;
           blockEl.classList.remove('editing');
         }, 100);
       });
