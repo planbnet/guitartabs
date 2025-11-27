@@ -727,6 +727,10 @@ const updateCursorOnly = () => {
 // Full DOM render
 const render = () => {
   if (!elEditor) return;
+
+  const previousScrollX = typeof window !== "undefined" ? window.scrollX : 0;
+  const previousScrollY = typeof window !== "undefined" ? window.scrollY : 0;
+
   elEditor.innerHTML = "";
 
   blocks.forEach((block, bi) => {
@@ -1117,6 +1121,15 @@ const render = () => {
 
     elEditor.appendChild(blockEl);
   });
+
+  if (typeof window !== "undefined") {
+    const restoreScroll = () => window.scrollTo(previousScrollX, previousScrollY);
+    if (typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(restoreScroll);
+    } else {
+      restoreScroll();
+    }
+  }
 
   updateCursorOnly();
   updateSelectionHighlight();
