@@ -6,6 +6,8 @@ const elKbd = document.getElementById("kbd");
 // Focus keyboard for iPad
 const focusKeyboard = () => {
   if (!elKbd) return;
+  // Only focus if not already focused to prevent unnecessary scroll
+  if (document.activeElement === elKbd) return;
   elKbd.focus({ preventScroll: true });
 };
 
