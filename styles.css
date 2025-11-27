@@ -473,12 +473,14 @@ body {
 /* Hidden input to summon iPad keyboard */
 #kbd {
   position: fixed;
-  top: 0;
-  left: 0;
+  top: 50%;
+  left: 50%;
   width: 1px;
   height: 1px;
   opacity: 0;
   pointer-events: none;
+  /* Prevent Safari from scrolling when focusing */
+  transform: translateZ(0);
 }
 
 .block-controls-docked {
