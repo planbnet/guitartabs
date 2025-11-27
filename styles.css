@@ -616,3 +616,20 @@ body {
   color: var(--muted);
   margin-bottom: 4px;
 }
+
+.chord-insert-btn {
+  margin-top: 8px;
+  width: 100%;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.chord-insert-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--border);
+  border-color: var(--border);
+  color: var(--muted);
+}
