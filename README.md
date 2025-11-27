@@ -1,13 +1,54 @@
 # ASCII Guitar Tab Editor
 
-Lightweight, offline, iPad-compatible web app for creating ASCII-style guitar tabs.
+A 99% vibe-coded lightweight, offline-capable web application for creating and editing ASCII-style guitar tablature. Works seamlessly on desktop browsers and iPad devices with full keyboard and touch support.
+
+## What It Does
+
+This editor lets you create professional guitar tabs using ASCII characters, the standard format used across the internet for sharing guitar music. You can:
+
+- **Create tab blocks**: Add tablature sections with 6 strings (standard guitar tuning: E-A-D-G-B-e)
+- **Add text blocks**: Insert lyrics, chord names, or annotations between tab sections
+- **Edit with three modes**: Choose between Replace, Shift, or Insert modes depending on your workflow
+- **Visual chord diagrams**: Type chord names (e.g., "C", "Am7", "D#m") and click them to see fingering diagrams
+- **Navigate efficiently**: Use arrow keys, keyboard shortcuts, or mouse/touch to move around
+- **Undo mistakes**: Full undo history keeps your work safe
+- **Work offline**: Install as a Progressive Web App (PWA) and use without internet
+
+## Import & Export
+
+The **Text** button opens a popup window that shows your entire tab as plain text. This is your hub for importing and exporting tabs:
+
+### Exporting
+1. Click the **Text** button in the toolbar
+2. Your complete tab appears in the text area
+3. Click **Export** to download as a `.txt` file, or simply copy the text manually
+4. Share the text file or paste it anywhere (forums, email, messaging apps)
+
+### Importing
+1. Click the **Text** button in the toolbar
+2. Choose an import method:
+   - **Import File**: Browse and select a `.txt` tab file from your device
+   - **Import Clipboard**: Paste tab text you've already copied
+   - **Manual entry**: Type or paste directly into the text area, then click **Update**
+
+The parser intelligently detects tab blocks (6 consecutive lines starting with string labels like `e|`, `B|`, etc.) and text blocks. Empty lines separate blocks. Tab blocks maintain alignment while text blocks preserve line breaks.
+
+## Chord Shape Diagrams
+
+When you type a chord name in a text block (like `C`, `Gmaj7`, or `F#m`), it becomes clickable. Clicking the chord name displays an interactive popup showing:
+
+- **Visual fret diagram**: Rendered using [vexchords](https://github.com/0xfe/vexchords), a JavaScript library for drawing beautiful chord charts
+- **Multiple fingering positions**: Navigate through alternative ways to play the same chord using arrow buttons
+- **Chord data**: Powered by [chords-db](https://github.com/tombatossals/chords-db), a comprehensive database of guitar chord positions
+
+The libraries work together: `chords-db` provides the fingering positions (which frets to press on which strings), and `vexchords` renders them as standard chord diagrams.
 
 ## Architecture
 
 ### File Structure
 ```
-tabeditor/
-├── tabeditor.html    # Main application
+guitartabs/
+├── index.html        # Main application
 ├── styles.css        # Complete styling
 ├── manifest.json     # PWA manifest
 ├── icon-192.png      # App icon (192x192)
@@ -15,15 +56,16 @@ tabeditor/
 └── js/               # All JavaScript files
     ├── state.js           # Data model, cursor, undo system
     ├── storage.js         # localStorage, import/export
-    ├── rendering.js       # DOM generation and updates
+    ├── rendering.js       # DOM generation, updates, chord diagrams
     ├── editing.js         # Tab operations and edit modes
     ├── keyboard.js        # Keyboard event handling
     ├── ui-interactions.js # Mouse/touch and modal helpers
-    ├── main.js           # Initialization and coordination
-    └── sw.js             # Service worker for PWA offline support
+    ├── main.js            # Initialization and coordination
+    ├── sw.js              # Service worker for PWA offline support
+    └── vendor/
+        ├── vexchords.js   # Chord diagram rendering library
+        └── chords-db.js   # Guitar chord fingering database
 ```
-
-**Note**: All JavaScript files must be placed in the `js/` directory.
 
 ### Data Model
 
@@ -32,8 +74,8 @@ blocks = [
   { type: 'tab', data: [string1[], string2[], ..., string6[]] },
   { type: 'text', data: "string content" }
 ];
-cur = { block, stringIdx, col };
-lineLength = 80; // characters per line
+cursor = { block, stringIdx, col };
+lineLength = 80; // characters per line for tab blocks
 editMode = 'replace' | 'shift' | 'insert';
 ```
 
@@ -42,17 +84,21 @@ editMode = 'replace' | 'shift' | 'insert';
 | Module | Function | Purpose |
 |--------|----------|---------|
 | **state.js** | `makeEmptyBlock(len)` | Create 6-string tab block filled with `-` |
-| | `setCursor(b, s, c)` | Set cursor and update display |
-| | `saveUndoState()` | Snapshot state for undo |
-| **rendering.js** | `render()` | Full DOM rebuild from blocks |
-| | `updateCursorOnly()` | Lightweight cursor repositioning |
-| **editing.js** | `handlePrintable(ch)` | Insert/replace character |
-| | `insertCharacterAtCursor()` | Cascade insert across blocks |
-| | `applyLength(L)` | Resize all tab blocks |
+| | `setCursor(b, s, c)` | Set cursor position and update display |
+| | `saveUndoState()` | Snapshot current state for undo history |
+| **rendering.js** | `render()` | Full DOM rebuild from blocks array |
+| | `updateCursorOnly()` | Lightweight cursor repositioning without re-render |
+| | `findChordData(name)` | Look up chord fingering positions from chords-db |
+| | `drawChordDiagram(...)` | Render chord shape using vexchords library |
+| **editing.js** | `handlePrintable(ch)` | Insert/replace character based on edit mode |
+| | `insertCharacterAtCursor()` | Cascade insert operation across blocks |
+| | `applyLength(L)` | Resize all tab blocks to new line length |
 | | `copySelectionFromBlock(idx)` | Capture rectangular tab selections |
-| | `pasteClipboardIntoBlock(idx)` | Paste clipboard respecting edit mode |
-| **keyboard.js** | `onKeyDown(e)` | Route keyboard input |
+| | `pasteClipboardIntoBlock(idx)` | Paste clipboard data respecting edit mode |
+| **keyboard.js** | `onKeyDown(e)` | Route and handle all keyboard input |
 | **storage.js** | `save()` / `load()` | localStorage persistence |
+| | `exportToFile()` | Download current tab as `.txt` file |
+| | `importFromFile()` / `importFromClipboard()` | Parse and load external tab content |
 
 ## DOM Structure
 
@@ -99,55 +145,57 @@ editMode = 'replace' | 'shift' | 'insert';
 
 ## Storage
 
+Application state is persisted to `localStorage` automatically after each change:
+
 ```js
-localStorage["ascii_tab_editor_v1"] = {
-  blocks: [...],
-  lineLength: 80,
+localStorage["ascii_tab_editor_v1"] = JSON.stringify({
+  blocks: [...],      // Array of tab and text blocks
+  lineLength: 80,     // Current line length setting
   cursor: { block, stringIdx, col },
   editMode: 'replace' | 'shift' | 'insert'
-}
+});
 ```
+
+The storage system uses the key `ascii_tab_editor_v1` to maintain state across browser sessions. Content is automatically saved after every edit, ensuring no work is lost.
 
 ## Extension Guidelines
 
 ### Maintaining Grid Alignment
 - All DOM changes must preserve monospace consistency
-- Character cells must use `.ch` class with fixed-width font
+- Character cells must use `.ch` class with fixed-width font (16px Menlo/Monaco/Consolas)
 - Avoid inline styles that override CSS positioning
+- Tab blocks maintain strict character alignment across all 6 strings
 
 ### Adding Features
-- **State changes**: Use `saveUndoState()` before mutations
-- **Display updates**: Call `render()` or `updateCursorOnly()`
-- **Persistence**: Call `save()` after data changes
+- **State changes**: Use `saveUndoState()` before mutations to enable undo
+- **Display updates**: Call `render()` for full updates or `updateCursorOnly()` for cursor-only changes
+- **Persistence**: Call `save()` after data changes to update localStorage
 - **Module placement**:
   - Data operations → `editing.js`
   - UI elements → `ui-interactions.js` or `rendering.js`
   - Input handling → `keyboard.js`
+  - Storage/import/export → `storage.js`
 
 ### Common Pitfalls
 - **Cursor offset**: Button elements in `.block` affect child indexing — use `querySelectorAll('.line')` not `:nth-child()`
-- **Insert mode**: Must fill non-active strings with `-` when shifting
+- **Insert mode**: Must fill non-active strings with `-` when shifting to maintain alignment
 - **Vertical bars**: Clear entire column before modifying individual string
+- **Chord detection**: Chord names are clickable only in text blocks, not within tab notation
 
 ### Event Binding
 - Click handlers bound during `render()` in `rendering.js`
-- Global keyboard in `keyboard.js` via `document.addEventListener`
-- Modal interactions in `ui-interactions.js` setup functions
+- Global keyboard events in `keyboard.js` via `document.addEventListener`
+- Modal interactions setup in `ui-interactions.js`
+- Chord popup interactions managed in `rendering.js`
 
 ## Technical Stack
 
-- **Language**: Vanilla JavaScript (ES6+)
-- **Frameworks**: None
-- **Storage**: localStorage
-- **Compatibility**: Desktop + iPad Safari/Chrome
-- **Dependencies**: Zero
-
-## Load Order
-
-1. `state.js` — Core data structures
-2. `storage.js` — Persistence layer
-3. `rendering.js` — Display logic
-4. `editing.js` — Business logic
-5. `keyboard.js` — Input handling
-6. `ui-interactions.js` — UI components
-7. `main.js` — Bootstrap and coordination
+- **Languages**: Vanilla JavaScript (ES6+), HTML5, CSS3
+- **Frameworks**: None (zero framework dependencies)
+- **Storage**: localStorage API for persistence
+- **Offline Support**: Service Worker (PWA)
+- **Chord Libraries**: 
+  - [vexchords](https://github.com/0xfe/vexchords) - SVG chord diagram rendering
+  - [chords-db](https://github.com/tombatossals/chords-db) - Comprehensive chord position database
+- **Compatibility**: Modern desktop browsers + iPad Safari/Chrome
+- **Build Tools**: None required (runs directly in browser)
