@@ -1,5 +1,7 @@
 # ASCII Guitar Tab Editor
 
+**🎸 [Try it live on GitHub Pages](https://planbnet.github.io/guitartabs/)**
+
 A 99% vibe-coded lightweight, offline-capable web application for creating and editing ASCII-style guitar tablature. Works seamlessly on desktop browsers and iPad devices with full keyboard and touch support.
 
 ## What It Does
