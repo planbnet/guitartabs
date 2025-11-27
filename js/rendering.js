@@ -847,7 +847,7 @@ const render = () => {
           minHeight = 42;
         }
         const desired = Math.max(minHeight, textArea.scrollHeight);
-        textArea.style.height = `${desired} px`;
+        textArea.style.height = `${desired}px`;
       };
 
       let textInputTimeout;
