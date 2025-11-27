@@ -622,6 +622,9 @@ const startSelectionGesture = (blockIdx, stringIdx, col, pointerType, opts = {})
   selectionDrag.anchor = { stringIdx, col };
   selectionDrag.pending = !immediate;
   selectionDrag.active = immediate;
+  if (typeof setCursor === "function") {
+    setCursor(blockIdx, stringIdx, col);
+  }
   if (immediate) {
     setSelection({ block: blockIdx, startString: stringIdx, endString: stringIdx, startCol: col, endCol: col });
   }
@@ -635,7 +638,10 @@ const updateSelectionFromCell = (blockIdx, stringIdx, col) => {
     endString: stringIdx,
     startCol: selectionDrag.anchor.col,
     endCol: col
-  }, { stringIdx, col }); // Pass current mouse position as cursor location
+  });
+  if (typeof setCursor === "function") {
+    setCursor(blockIdx, stringIdx, col);
+  }
 };
 
 const handleSelectionPointerMove = (clientX, clientY, pointerType) => {
