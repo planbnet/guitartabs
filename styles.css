@@ -142,6 +142,7 @@ body {
   margin: .75rem 0 1rem;
   padding: .6rem .6rem .8rem .6rem;
   position: relative;
+  min-width: fit-content;
 }
 
 .block.text-block {
@@ -572,12 +573,6 @@ body {
   display: none;
   min-width: 150px;
   text-align: center;
-}
-
-  {
-    {
-    ...
-  }
 }
 
 #chord-popup.visible {
