@@ -28,15 +28,53 @@ const load = () => {
   } catch { return false; }
 };
 
+// Helper function to make a string filesystem-safe
+const sanitizeFilename = (filename) => {
+  return filename
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '') // Remove invalid characters
+    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+    .trim() // Remove leading/trailing spaces
+    .substring(0, 200) // Limit length
+    || 'guitar-tab'; // Fallback if empty
+};
+
+// Extract title from content (first line followed by empty line)
+const extractTitle = () => {
+  // Check if first block is text and contains title pattern
+  if (blocks.length === 0 || blocks[0].type !== 'text') {
+    return null;
+  }
+
+  const firstBlockText = blocks[0].data;
+  const lines = firstBlockText.split('\n');
+
+  // Title pattern: first line has text, second line is empty
+  if (lines.length >= 2 && lines[0].trim() !== '' && lines[1].trim() === '') {
+    return lines[0].trim();
+  }
+
+  // Also check if it's a single-line text block (docked to a tab)
+  // which is followed by a tab block
+  if (lines.length === 1 && lines[0].trim() !== '' && blocks.length > 1 && blocks[1].type === 'tab') {
+    return lines[0].trim();
+  }
+
+  return null;
+};
+
 // Export functionality - download current content as .txt file
 const exportToFile = () => {
   const content = formatContentForExport();
   const blob = new Blob([content], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
 
+  // Try to extract title for filename
+  const title = extractTitle();
+  const filename = title ? sanitizeFilename(title) + '.txt' : 'guitar-tab.txt';
+
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'guitar-tab.txt';
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
