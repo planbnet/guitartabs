@@ -19,7 +19,7 @@
   // Global event listeners
   const setupGlobalListeners = () => {
     document.addEventListener("keydown", onKeyDown);
-    
+
     // Hide tooltip on any click
     document.addEventListener("click", () => {
       if (typeof hideNoteTooltip === "function") {
@@ -30,14 +30,19 @@
 
   // Application initialization
   const init = () => {
-    // Load saved data or create initial content
-    if (!load()) {
-      blocks.push(makeEmptyBlock(lineLength));
-    } else {
-      // reflect stored length in UI
-      document.getElementById("inp-len").value = String(lineLength);
+    // Try to load from URL first (shared tab), then fall back to local storage
+    const loadedFromUrl = typeof loadFromUrl === "function" && loadFromUrl();
+
+    if (!loadedFromUrl) {
+      // Load saved data or create initial content
+      if (!load()) {
+        blocks.push(makeEmptyBlock(lineLength));
+      } else {
+        // reflect stored length in UI
+        document.getElementById("inp-len").value = String(lineLength);
+      }
     }
-    
+
     // Initialize mode button state
     const modeBtn = document.getElementById("btn-mode-toggle");
     if (editMode === 'shift') {
@@ -52,11 +57,11 @@
       modeBtn.textContent = "Replace";
       modeBtn.classList.remove('insert-mode', 'shift-mode');
     }
-    
+
     ensureAtLeastOneBlock();
     render();
     focusKeyboard();
-    
+
     // Save initial state for undo
     setTimeout(() => saveUndoState(), 100);
   };

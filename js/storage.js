@@ -155,6 +155,87 @@ const importFromClipboard = async () => {
   }
 };
 
+// Share functionality - create shareable URL with compressed tab
+const shareTab = async () => {
+  try {
+    // Prepare data to share
+    const data = {
+      blocks,
+      lineLength,
+      version: 1
+    };
+
+    // Compress the data
+    const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(data));
+
+    // Create shareable URL
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', compressed);
+    const shareUrl = url.toString();
+
+    // Check if URL is too long (conservative limit for compatibility)
+    if (shareUrl.length > 2000) {
+      alert(`Tab is too large to share via URL (${shareUrl.length} characters, limit ~2000).\n\nTip: Try splitting into smaller tabs or use Export to save locally.`);
+      return;
+    }
+
+    // Copy to clipboard
+    await navigator.clipboard.writeText(shareUrl);
+
+    // Show success message
+    alert(`Share URL copied to clipboard!\n\nURL length: ${shareUrl.length} characters\n\nAnyone with this link can open your tab.`);
+
+  } catch (err) {
+    console.error('Share failed:', err);
+    alert('Failed to create share URL. Please try exporting instead.');
+  }
+};
+
+// Load tab from URL parameter on page load
+const loadFromUrl = () => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const compressed = params.get('tab');
+
+    if (!compressed) {
+      return false;
+    }
+
+    // Decompress and parse
+    const json = LZString.decompressFromEncodedURIComponent(compressed);
+    if (!json) {
+      console.error('Failed to decompress URL data');
+      return false;
+    }
+
+    const data = JSON.parse(json);
+
+    // Validate data
+    if (!data || !Array.isArray(data.blocks)) {
+      console.error('Invalid data format');
+      return false;
+    }
+
+    // Load the data
+    blocks = data.blocks;
+    lineLength = data.lineLength || DEFAULT_LEN;
+    cur = { block: 0, stringIdx: 0, col: 0 };
+
+    // Update UI
+    document.getElementById("inp-len").value = String(lineLength);
+
+    // Clean URL (remove the tab parameter after loading)
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete('tab');
+    window.history.replaceState({}, '', cleanUrl.toString());
+
+    return true;
+  } catch (err) {
+    console.error('Failed to load from URL:', err);
+    return false;
+  }
+};
+
 // Parse imported text content into blocks
 const parseImportedContent = (content) => {
   // Normalize Windows line endings so blank lines are detected correctly

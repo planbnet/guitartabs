@@ -10,31 +10,31 @@ const hidePopover = () => {
 // Legend modal interactions
 const setupLegendModal = () => {
   const modal = document.getElementById("legend");
-  
+
   // Show legend modal
   document.getElementById("btn-legend").addEventListener("click", () => {
     modal.style.display = "flex";
   });
-  
+
   document.getElementById("legend-close").addEventListener("click", () => {
     modal.style.display = "none";
     focusKeyboard();
   });
-  
+
   modal.addEventListener("click", (e) => {
     if (e.target === modal) {
       modal.style.display = "none";
       focusKeyboard();
     }
   });
-  
+
   // Legend symbol buttons
   document.querySelectorAll(".legend-btn").forEach(btn => {
     btn.addEventListener("click", (e) => {
       if (isTabBlock(blocks[cur.block])) {
         const symbol = e.target.dataset.symbol;
         saveUndoState();
-        
+
         // Special handling for | - insert across all strings
         if (symbol === '|') {
           for (let s = 0; s < 6; s++) {
@@ -43,7 +43,7 @@ const setupLegendModal = () => {
         } else {
           blocks[cur.block].data[cur.stringIdx][cur.col] = symbol;
         }
-        
+
         // Move cursor forward
         if (cur.col < lineLength - 1) {
           setCursor(cur.block, cur.stringIdx, cur.col + 1);
@@ -171,6 +171,12 @@ const setupTextModal = () => {
     }
   });
 
+  document.getElementById("text-share").addEventListener("click", async () => {
+    if (typeof shareTab === "function") {
+      await shareTab();
+    }
+  });
+
   modal.addEventListener("click", (e) => {
     if (e.target === modal) {
       closeModal();
@@ -183,17 +189,17 @@ const setupUIInteractions = () => {
   setupLegendModal();
   setupSettingsModal();
   setupTextModal();
-  
+
   // Keep keyboard focused on iPad when tapping the editor area
   // But don't steal focus if a modal is open
   const shouldFocusKeyboard = () => {
     const modals = document.querySelectorAll('.modal');
-    const isModalOpen = Array.from(modals).some(modal => 
+    const isModalOpen = Array.from(modals).some(modal =>
       modal.style.display === 'flex' || modal.style.display === 'block'
     );
     return !isModalOpen;
   };
-  
+
   elEditor.addEventListener("mousedown", () => {
     if (shouldFocusKeyboard()) focusKeyboard();
   });

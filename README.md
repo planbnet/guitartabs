@@ -23,8 +23,9 @@ The **Text** button opens a popup window that shows your entire tab as plain tex
 ### Exporting
 1. Click the **Text** button in the toolbar
 2. Your complete tab appears in the text area
-3. Click **Export** to download as a `.txt` file, or simply copy the text manually
-4. Share the text file or paste it anywhere (forums, email, messaging apps)
+3. Click **Export** to download as a `.txt` file
+   - If the first line is text followed by an empty line, it will be used as the filename
+   - Otherwise, defaults to `guitar-tab.txt`
 
 ### Importing
 1. Click the **Text** button in the toolbar
@@ -34,6 +35,27 @@ The **Text** button opens a popup window that shows your entire tab as plain tex
    - **Manual entry**: Type or paste directly into the text area, then click **Update**
 
 The parser intelligently detects tab blocks (6 consecutive lines starting with string labels like `e|`, `B|`, etc.) and text blocks. Empty lines separate blocks. Tab blocks maintain alignment while text blocks preserve line breaks.
+
+## Share via URL
+
+The **Share** button (in the Text modal) generates a shareable URL that includes your entire tab:
+
+1. Click the **Text** button, then click **Share**
+2. A URL is automatically copied to your clipboard
+3. Share this URL with anyone — they can open it to instantly load your tab
+
+### How It Works
+- Tab data is compressed using [LZ-String](https://pieroxy.net/blog/pages/lz-string/index.html) algorithm
+- Compressed data is added as a URL parameter (`?tab=...`)
+- URLs are validated to stay under 2,000 characters for maximum browser compatibility
+- When someone opens a shared URL, the tab loads automatically
+
+### URL Length Considerations
+- **Small tabs** (5-10 measures): ~300-800 characters ✅
+- **Medium tabs** (10-15 measures): ~800-1,500 characters ✅  
+- **Large tabs** (20+ measures): May exceed 2,000 character limit ⚠️
+
+If your tab is too large to share via URL, use the Export function to save as a `.txt` file instead.
 
 ## Chord Shape Diagrams
 
@@ -99,8 +121,10 @@ editMode = 'replace' | 'shift' | 'insert';
 | | `pasteClipboardIntoBlock(idx)` | Paste clipboard data respecting edit mode |
 | **keyboard.js** | `onKeyDown(e)` | Route and handle all keyboard input |
 | **storage.js** | `save()` / `load()` | localStorage persistence |
-| | `exportToFile()` | Download current tab as `.txt` file |
+| | `exportToFile()` | Download current tab as `.txt` file (auto-detects title) |
 | | `importFromFile()` / `importFromClipboard()` | Parse and load external tab content |
+| | `shareTab()` | Generate compressed shareable URL |
+| | `loadFromUrl()` | Load tab from URL parameter on page load |
 
 ## DOM Structure
 
@@ -196,8 +220,9 @@ The storage system uses the key `ascii_tab_editor_v1` to maintain state across b
 - **Frameworks**: None (zero framework dependencies)
 - **Storage**: localStorage API for persistence
 - **Offline Support**: Service Worker (PWA)
-- **Chord Libraries**: 
+- **Libraries**: 
   - [vexchords](https://github.com/0xfe/vexchords) - SVG chord diagram rendering
   - [chords-db](https://github.com/tombatossals/chords-db) - Comprehensive chord position database
+  - [lz-string](https://pieroxy.net/blog/pages/lz-string/index.html) - URL-safe compression for sharing
 - **Compatibility**: Modern desktop browsers + iPad Safari/Chrome
 - **Build Tools**: None required (runs directly in browser)
