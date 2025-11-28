@@ -173,13 +173,13 @@ body {
   border: none;
   outline: none;
   width: 100%;
+  min-width: calc((var(--line-length, 80) + 2) * 1ch);
   resize: none;
   padding: 0;
   min-height: 1.5em;
   overflow: hidden;
   box-sizing: border-box;
-  white-space: pre-wrap;
-  word-wrap: break-word;
+  white-space: pre;
 }
 
 .text-content::placeholder {
@@ -524,10 +524,10 @@ body {
   color: var(--fg);
   background: transparent;
   width: 100%;
+  min-width: calc((var(--line-length, 80) + 2) * 1ch);
   padding: 0;
   min-height: 1.5em;
-  white-space: pre-wrap;
-  word-wrap: break-word;
+  white-space: pre;
   cursor: text;
   box-sizing: border-box;
   display: none;

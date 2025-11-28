@@ -768,6 +768,7 @@ const render = () => {
   const previousScrollY = typeof window !== "undefined" ? window.scrollY : 0;
 
   elEditor.innerHTML = "";
+  elEditor.style.setProperty('--line-length', lineLength);
 
   blocks.forEach((block, bi) => {
     const blockEl = document.createElement("div");
