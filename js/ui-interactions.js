@@ -131,16 +131,9 @@ const setupTextModal = () => {
   });
 
   document.getElementById("text-export").addEventListener("click", () => {
-    const content = textarea.value;
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'guitar-tab.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    if (typeof exportToFile === "function") {
+      exportToFile(textarea.value);
+    }
   });
 
   document.getElementById("text-import").addEventListener("click", () => {

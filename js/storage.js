@@ -38,38 +38,39 @@ const sanitizeFilename = (filename) => {
     || 'guitar-tab'; // Fallback if empty
 };
 
-// Extract title from content (first line followed by empty line)
-const extractTitle = () => {
-  // Check if first block is text and contains title pattern
-  if (blocks.length === 0 || blocks[0].type !== 'text') {
-    return null;
-  }
+// Extract title from content string
+const extractTitle = (content) => {
+  if (!content) return null;
 
-  const firstBlockText = blocks[0].data;
-  const lines = firstBlockText.split('\n');
+  const lines = content.split('\n');
 
-  // Title pattern: first line has text, second line is empty
+  // Title pattern 1: first line has text, second line is empty
   if (lines.length >= 2 && lines[0].trim() !== '' && lines[1].trim() === '') {
     return lines[0].trim();
   }
 
-  // Also check if it's a single-line text block (docked to a tab)
-  // which is followed by a tab block
-  if (lines.length === 1 && lines[0].trim() !== '' && blocks.length > 1 && blocks[1].type === 'tab') {
+  // Title pattern 2: single-line text block (docked to a tab)
+  // Check if first line is text and second line looks like a tab
+  if (lines.length >= 2 && lines[0].trim() !== '' && isTabSequence(lines.slice(1, 7))) {
+    return lines[0].trim();
+  }
+
+  // Fallback: If we have text at the start, use the first line as title
+  if (lines.length > 0 && lines[0].trim() !== '') {
     return lines[0].trim();
   }
 
   return null;
 };
 
-// Export functionality - download current content as .txt file
-const exportToFile = () => {
-  const content = formatContentForExport();
+// Export functionality - download content as .txt file
+const exportToFile = (contentOverride = null) => {
+  const content = contentOverride || formatContentForExport();
   const blob = new Blob([content], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
 
   // Try to extract title for filename
-  const title = extractTitle();
+  const title = extractTitle(content);
   const filename = title ? sanitizeFilename(title) + '.txt' : 'guitar-tab.txt';
 
   const a = document.createElement('a');
