@@ -964,7 +964,9 @@ const render = () => {
       textArea.className = "text-content";
       textArea.value = block.data;
       textArea.rows = 1;
-      textArea.placeholder = "Add a line break to detach this line from the next tab line";
+      if (isDocked) {
+        textArea.placeholder = "Add a line break to detach this line from the next tab line";
+      }
       textArea.setAttribute("spellcheck", "false");
       textArea.setAttribute("autocomplete", "off");
       textArea.setAttribute("autocorrect", "off");
