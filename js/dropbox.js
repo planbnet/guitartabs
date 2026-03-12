@@ -75,6 +75,13 @@ const dbxGetToken = async () => {
   return localStorage.getItem('dbx_access_token');
 };
 
+const dbxEncodeApiArg = (arg) => {
+  // Keep header ASCII-safe so filenames like "Für ..." work in Dropbox-API-Arg.
+  return JSON.stringify(arg).replace(/[\u0080-\uFFFF]/g, (ch) =>
+    '\\u' + ch.charCodeAt(0).toString(16).padStart(4, '0')
+  );
+};
+
 // Authenticated fetch wrapper with auto-refresh
 const dbxFetch = async (url, options = {}) => {
   const token = await dbxGetToken();
@@ -206,10 +213,11 @@ const dbxListFolder = async (path) => {
 };
 
 const dbxDownloadFile = async (path) => {
+  const normalizedPath = (path || '').normalize('NFC');
   const resp = await dbxFetch('https://content.dropboxapi.com/2/files/download', {
     method: 'POST',
     headers: {
-      'Dropbox-API-Arg': JSON.stringify({ path })
+      'Dropbox-API-Arg': dbxEncodeApiArg({ path: normalizedPath })
     }
   });
 
@@ -221,12 +229,13 @@ const dbxDownloadFile = async (path) => {
 };
 
 const dbxUploadFile = async (path, content) => {
+  const normalizedPath = (path || '').normalize('NFC');
   const resp = await dbxFetch('https://content.dropboxapi.com/2/files/upload', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/octet-stream',
-      'Dropbox-API-Arg': JSON.stringify({
-        path: path,
+      'Dropbox-API-Arg': dbxEncodeApiArg({
+        path: normalizedPath,
         mode: 'overwrite',
         autorename: false,
         mute: false
