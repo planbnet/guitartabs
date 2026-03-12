@@ -31,6 +31,9 @@ const isPrintable = (e) => {
 
 // Main keyboard event handler
 const onKeyDown = (e) => {
+  // Don't intercept when perform mode is active (it has its own handler)
+  if (typeof performModeActive !== 'undefined' && performModeActive) return;
+
   if (suppressNextArrowNavigation && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
     suppressNextArrowNavigation = false;
     return;

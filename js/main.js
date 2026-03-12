@@ -14,6 +14,9 @@
       }
     });
     document.getElementById("btn-clear").addEventListener("click", clearAll);
+    document.getElementById("btn-perform").addEventListener("click", () => {
+      if (typeof enterPerformMode === 'function') enterPerformMode();
+    });
   };
 
   // Global event listeners

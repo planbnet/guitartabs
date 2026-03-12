@@ -775,3 +775,129 @@ body {
   color: var(--accent);
   font-weight: 600;
 }
+
+/* Perform mode */
+.toolbar .perform-btn {
+  background: #1a3a1a;
+  border-color: #2b8a2b;
+  color: var(--accent-2);
+}
+
+.perform-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+}
+
+.perform-scroller {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.perform-content {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  line-height: 1.4;
+  padding: 1rem;
+  padding-bottom: 0;
+}
+
+.perform-tab-block {
+  margin: 0;
+  padding: .25em 0;
+  font: inherit;
+  white-space: pre;
+  color: var(--fg);
+}
+
+.perform-label {
+  color: var(--accent-2);
+}
+
+.perform-text-block {
+  color: var(--accent);
+  font-weight: 600;
+  font-family: inherit;
+  font-size: inherit;
+  padding: .75em 0 .15em;
+  white-space: pre-wrap;
+}
+
+.perform-text-block.perform-docked {
+  padding-bottom: 0;
+  margin-bottom: -.15em;
+}
+
+.perform-controls {
+  position: relative;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .6rem 1rem;
+  background: rgba(23, 26, 33, .92);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+  flex-shrink: 0;
+}
+
+.perform-ctrl-btn {
+  font: 600 16px/1 var(--mono);
+  background: var(--card);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: .55rem .85rem;
+  cursor: pointer;
+  min-width: 2.5rem;
+  text-align: center;
+}
+
+.perform-ctrl-btn:hover {
+  border-color: var(--accent);
+}
+
+.perform-play-btn {
+  font-size: 18px;
+  min-width: 3rem;
+}
+
+.perform-exit-btn {
+  margin-left: auto;
+  color: var(--danger);
+  border-color: #6b2b2b;
+}
+
+.perform-speed-label {
+  font: 600 13px/1 var(--mono);
+  color: var(--muted);
+  user-select: none;
+}
+
+.perform-speed-display {
+  color: var(--fg);
+  min-width: 2.5em;
+  display: inline-block;
+  text-align: center;
+}
+
+.perform-wait-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 301;
+  pointer-events: none;
+}
+
+.perform-wait-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--accent-2);
+}

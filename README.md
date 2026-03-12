@@ -57,6 +57,57 @@ The **Share** button (in the Text modal) generates a shareable URL that includes
 
 If your tab is too large to share via URL, use the Export function to save as a `.txt` file instead.
 
+## Dropbox Integration
+
+Connect to your Dropbox account to open and save tab files directly from the cloud — no server required.
+
+### Setup
+1. The app uses Dropbox OAuth2 with PKCE (no secret needed, safe for public repos)
+2. Click **Settings** → **Connect to Dropbox** to authorize
+3. Choose a folder in your Dropbox to use as your tab library
+
+### Usage
+- **Open**: Click the **Open** button in the toolbar to browse and load `.txt` files from your Dropbox folder
+- **Save**: Click the **Save** button to write back to Dropbox — previously opened files are auto-overwritten, new files prompt for a filename
+- Your selected folder and current file are remembered in localStorage across sessions
+- Tokens auto-refresh so you stay connected
+
+## Perform Mode
+
+A fullscreen auto-scrolling view for playing along to your tabs.
+
+### Entering Perform Mode
+Click the green **Perform** button in the toolbar. The editor is replaced by a large, read-only view of your tab optimized for reading at a distance.
+
+### Scroll Behavior
+- All content (text lines and tab blocks) scrolls continuously at a steady rate
+- Speed is measured in **seconds per line** — adjustable in 0.5s increments
+- When you press Play, a brief **countdown** delays scrolling so you can read the first screen of content — a green progress bar at the top of the screen shows the remaining wait time
+- Scrolling manually during the countdown skips the wait immediately
+
+### Controls (bottom bar)
+| Button | Action |
+|--------|--------|
+| ⏮ | Reset to top |
+| ▶ / ⏸ | Play / Pause auto-scroll |
+| − / + | Decrease / Increase seconds per line |
+| ⛶ | Toggle browser fullscreen |
+| ✕ | Exit perform mode |
+
+### Keyboard Shortcuts
+| Key | Action |
+|-----|--------|
+| Space | Play / Pause |
+| + / = | Increase delay (slower) |
+| - | Decrease delay (faster) |
+| F | Toggle fullscreen |
+| ↑ / ← | Scroll up manually |
+| ↓ / → | Scroll down manually |
+| Escape | Exit perform mode |
+
+### Font Sizing
+The font is automatically calculated to be as large as possible while still fitting the full tab width on screen. It recalculates on window resize.
+
 ## Chord Shape Diagrams
 
 When you type a chord name in a text block (like `C`, `Gmaj7`, or `F#m`), it becomes clickable. Clicking the chord name displays an interactive popup showing:
@@ -80,6 +131,8 @@ guitartabs/
 └── js/               # All JavaScript files
     ├── state.js           # Data model, cursor, undo system
     ├── storage.js         # localStorage, import/export
+    ├── dropbox.js         # Dropbox OAuth2 PKCE + API integration
+    ├── perform.js         # Fullscreen auto-scrolling perform mode
     ├── rendering.js       # DOM generation, updates, chord diagrams
     ├── editing.js         # Tab operations and edit modes
     ├── keyboard.js        # Keyboard event handling
@@ -125,6 +178,12 @@ editMode = 'replace' | 'shift' | 'insert';
 | | `importFromFile()` / `importFromClipboard()` | Parse and load external tab content |
 | | `shareTab()` | Generate compressed shareable URL |
 | | `loadFromUrl()` | Load tab from URL parameter on page load |
+| **dropbox.js** | `dbxStartAuth()` / `dbxHandleRedirect()` | OAuth2 PKCE authentication flow |
+| | `dbxOpenFile()` / `dbxSaveFile()` | Open/save files from Dropbox |
+| | `dbxListFolder()` | Browse Dropbox folder contents |
+| **perform.js** | `enterPerformMode()` / `exitPerformMode()` | Manage fullscreen overlay lifecycle |
+| | `performScrollTick()` | Hybrid scroll engine (smooth text + tab snap-out) |
+| | `calculatePerformFontSize()` | Binary search for optimal monospace font size |
 
 ## DOM Structure
 
