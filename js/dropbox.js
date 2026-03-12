@@ -259,11 +259,30 @@ const dbxOpenFile = async (path) => {
   }
 };
 
+const dbxClearCurrentFile = () => {
+  localStorage.removeItem('dbx_current_file');
+  if (typeof dbxSyncSettingsUI === 'function') dbxSyncSettingsUI();
+};
+
+const dbxHasMeaningfulContent = () => {
+  return blocks.some((block) => {
+    if (block.type === 'text') {
+      return (block.data || '').trim() !== '';
+    }
+    if (isTabBlock(block)) {
+      return block.data.some((row) =>
+        row.some((char) => char !== '-' && char !== '|' && char !== ' ')
+      );
+    }
+    return false;
+  });
+};
+
 const dbxSaveFile = async () => {
   const content = formatContentForExport();
   const currentFile = localStorage.getItem('dbx_current_file');
 
-  if (currentFile) {
+  if (currentFile && dbxHasMeaningfulContent()) {
     // Auto-overwrite existing file
     try {
       await dbxUploadFile(currentFile, content);
@@ -274,6 +293,7 @@ const dbxSaveFile = async () => {
       alert('Failed to save: ' + err.message);
     }
   } else {
+    if (currentFile) dbxClearCurrentFile();
     // Show filename prompt
     dbxShowSaveModal(content);
   }

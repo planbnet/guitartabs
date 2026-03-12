@@ -124,6 +124,7 @@ const setupTextModal = () => {
   document.getElementById("text-update").addEventListener("click", () => {
     if (typeof parseImportedContent === "function") {
       parseImportedContent(textarea.value);
+      if (typeof dbxClearCurrentFile === "function") dbxClearCurrentFile();
       render();
       save();
     }

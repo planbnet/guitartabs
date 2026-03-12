@@ -492,6 +492,7 @@ const clearAll = () => {
   saveUndoState();
   clearSelection();
   blocks = [makeEmptyBlock(lineLength)];
+  if (typeof dbxClearCurrentFile === 'function') dbxClearCurrentFile();
   setCursor(0, 0, 0);
   render();
   save();
