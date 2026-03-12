@@ -630,3 +630,148 @@ body {
   border-color: var(--border);
   color: var(--muted);
 }
+
+/* Dropbox integration */
+.toolbar .dbx-btn {
+  background: #1a3a5c;
+  border-color: #2b69c2;
+}
+
+.settings-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1rem 0 .75rem;
+}
+
+.settings-section-title {
+  margin: 0 0 .75rem;
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.dbx-hint {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 .75rem;
+}
+
+.dbx-status-connected {
+  color: var(--accent-2);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.dbx-folder-text {
+  font-size: 13px;
+  color: var(--fg);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dbx-current-file {
+  font-size: 12px;
+  color: var(--muted);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.danger-text {
+  color: var(--danger) !important;
+  border-color: #6b2b2b !important;
+}
+
+.dbx-open-card,
+.dbx-folder-card {
+  max-width: 480px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dbx-path-display {
+  font: 13px/1.4 var(--mono);
+  color: var(--muted);
+  padding: .4rem .6rem;
+  background: #11141a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: .5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dbx-file-list {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  max-height: 300px;
+  min-height: 100px;
+}
+
+.dbx-file-item {
+  padding: .5rem .75rem;
+  font: 14px/1.4 var(--mono);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.dbx-file-item:last-child {
+  border-bottom: none;
+}
+
+.dbx-file-item:hover {
+  background: rgba(106, 166, 255, 0.1);
+}
+
+.dbx-file-item .dbx-icon {
+  color: var(--muted);
+  font-size: 14px;
+  min-width: 1.5em;
+}
+
+.dbx-file-item.folder .dbx-icon {
+  color: var(--accent);
+}
+
+.dbx-loading {
+  text-align: center;
+  padding: 1rem;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.dbx-error {
+  color: var(--danger);
+  font-size: 13px;
+  padding: .5rem 0;
+}
+
+.dbx-filename-input {
+  font: 600 13px/1 var(--mono);
+  background: #11141a;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .4rem .6rem;
+  width: 180px;
+}
+
+.dbx-filename-input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.dbx-parent-item {
+  color: var(--accent);
+  font-weight: 600;
+}

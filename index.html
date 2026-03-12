@@ -25,6 +25,8 @@
     <button id="btn-undo">Undo</button>
     <button id="btn-text-modal">Text</button>
     <button id="btn-clear" class="danger">Clear</button>
+    <button id="btn-dbx-open" class="dbx-btn" style="display:none;">Open</button>
+    <button id="btn-dbx-save" class="dbx-btn" style="display:none;">Save</button>
     <button id="btn-legend" class="align-right">Legend</button>
     <button id="btn-settings" class="secondary">Settings</button>
     <input id="inp-len" type="number" min="50" max="120" step="1" value="80" class="hidden-control"
@@ -42,7 +44,36 @@
           <button id="settings-len-inc" class="btn">+</button>
         </div>
       </div>
-      <div style="display:flex; gap:.5rem; justify-content:flex-end;">
+      <hr class="settings-divider" />
+      <h4 class="settings-section-title">Dropbox</h4>
+      <div id="dbx-disconnected-section">
+        <p class="dbx-hint">Connect to Dropbox to open and save tabs directly.</p>
+        <div style="display:flex; gap:.5rem; justify-content:flex-end;">
+          <button id="dbx-connect" class="btn primary">Connect to Dropbox</button>
+        </div>
+      </div>
+      <div id="dbx-connected-section" style="display:none;">
+        <div class="settings-row">
+          <span>Status</span>
+          <span class="dbx-status-connected">Connected</span>
+        </div>
+        <div class="settings-row">
+          <span>Folder</span>
+          <div class="settings-len-controls">
+            <span id="dbx-folder-display" class="dbx-folder-text">Not set</span>
+            <button id="dbx-change-folder" class="btn">Change</button>
+          </div>
+        </div>
+        <div id="dbx-current-file-row" class="settings-row" style="display:none;">
+          <span>File</span>
+          <span id="dbx-current-file-display" class="dbx-current-file"></span>
+        </div>
+        <div style="display:flex; gap:.5rem; justify-content:flex-end;">
+          <button id="dbx-disconnect" class="btn danger-text">Disconnect</button>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:.5rem; justify-content:flex-end; margin-top:.75rem;">
         <button id="settings-close" class="btn">Close</button>
       </div>
     </div>
@@ -107,6 +138,52 @@
     </div>
   </div>
 
+  <!-- Dropbox Open Modal -->
+  <div id="dbx-open-modal" class="modal" role="dialog" aria-modal="true">
+    <div class="card dbx-open-card">
+      <h3>Open from Dropbox</h3>
+      <div id="dbx-open-path" class="dbx-path-display"></div>
+      <div id="dbx-open-list" class="dbx-file-list"></div>
+      <div id="dbx-open-loading" class="dbx-loading" style="display:none;">Loading...</div>
+      <div id="dbx-open-error" class="dbx-error" style="display:none;"></div>
+      <div style="display:flex; gap:.5rem; justify-content:flex-end; margin-top:.75rem;">
+        <button id="dbx-open-folder" class="btn">Change Folder</button>
+        <button id="dbx-open-close" class="btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dropbox Folder Browser Modal -->
+  <div id="dbx-folder-modal" class="modal" role="dialog" aria-modal="true">
+    <div class="card dbx-folder-card">
+      <h3>Select Dropbox Folder</h3>
+      <div id="dbx-folder-path" class="dbx-path-display"></div>
+      <div id="dbx-folder-list" class="dbx-file-list"></div>
+      <div id="dbx-folder-loading" class="dbx-loading" style="display:none;">Loading...</div>
+      <div id="dbx-folder-error" class="dbx-error" style="display:none;"></div>
+      <div style="display:flex; gap:.5rem; justify-content:flex-end; margin-top:.75rem;">
+        <button id="dbx-folder-select" class="btn primary">Select This Folder</button>
+        <button id="dbx-folder-close" class="btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dropbox Save Modal -->
+  <div id="dbx-save-modal" class="modal" role="dialog" aria-modal="true">
+    <div class="card small">
+      <h3>Save to Dropbox</h3>
+      <div class="settings-row">
+        <span>Filename</span>
+        <input id="dbx-save-filename" type="text" class="dbx-filename-input" placeholder="my-tab.txt" />
+      </div>
+      <div id="dbx-save-error" class="dbx-error" style="display:none;"></div>
+      <div style="display:flex; gap:.5rem; justify-content:flex-end;">
+        <button id="dbx-save-cancel" class="btn">Cancel</button>
+        <button id="dbx-save-confirm" class="btn primary">Save</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Note tooltip -->
   <div id="note-tooltip"></div>
   <div id="chord-popup"></div>
@@ -117,6 +194,7 @@
   <script src="js/vendor/chords-db.js"></script>
   <script src="js/state.js"></script>
   <script src="js/storage.js"></script>
+  <script src="js/dropbox.js"></script>
   <script src="js/rendering.js"></script>
   <script src="js/editing.js"></script>
   <script src="js/keyboard.js"></script>

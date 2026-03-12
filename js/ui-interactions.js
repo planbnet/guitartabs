@@ -177,11 +177,224 @@ const setupTextModal = () => {
   });
 };
 
+// Dropbox UI sync - updates settings panel and toolbar button visibility
+const dbxSyncSettingsUI = () => {
+  const connected = typeof dbxIsConnected === 'function' && dbxIsConnected();
+
+  // Settings panel sections
+  const connectedSection = document.getElementById('dbx-connected-section');
+  const disconnectedSection = document.getElementById('dbx-disconnected-section');
+  if (connectedSection) connectedSection.style.display = connected ? 'block' : 'none';
+  if (disconnectedSection) disconnectedSection.style.display = connected ? 'none' : 'block';
+
+  // Toolbar buttons
+  const openBtn = document.getElementById('btn-dbx-open');
+  const saveBtn = document.getElementById('btn-dbx-save');
+  if (openBtn) openBtn.style.display = connected ? '' : 'none';
+  if (saveBtn) saveBtn.style.display = connected ? '' : 'none';
+
+  // Folder display
+  const folderDisplay = document.getElementById('dbx-folder-display');
+  const folder = localStorage.getItem('dbx_folder_path');
+  if (folderDisplay) folderDisplay.textContent = folder || '/ (root)';
+
+  // Current file display
+  const currentFile = localStorage.getItem('dbx_current_file');
+  const fileRow = document.getElementById('dbx-current-file-row');
+  const fileDisplay = document.getElementById('dbx-current-file-display');
+  if (fileRow && fileDisplay) {
+    if (currentFile) {
+      fileDisplay.textContent = currentFile.split('/').pop();
+      fileRow.style.display = '';
+    } else {
+      fileRow.style.display = 'none';
+    }
+  }
+};
+
+const setupDropboxUI = () => {
+  // --- Settings modal Dropbox controls ---
+  const connectBtn = document.getElementById('dbx-connect');
+  if (connectBtn) {
+    connectBtn.addEventListener('click', () => {
+      if (typeof dbxStartAuth === 'function') dbxStartAuth();
+    });
+  }
+
+  const disconnectBtn = document.getElementById('dbx-disconnect');
+  if (disconnectBtn) {
+    disconnectBtn.addEventListener('click', () => {
+      if (typeof dbxDisconnect === 'function') dbxDisconnect();
+      localStorage.removeItem('dbx_folder_path');
+      localStorage.removeItem('dbx_current_file');
+      dbxSyncSettingsUI();
+    });
+  }
+
+  const changeFolderBtn = document.getElementById('dbx-change-folder');
+  if (changeFolderBtn) {
+    changeFolderBtn.addEventListener('click', () => {
+      const current = localStorage.getItem('dbx_folder_path') || '';
+      if (typeof dbxShowFolderBrowser === 'function') dbxShowFolderBrowser(current);
+    });
+  }
+
+  // Sync settings UI when settings modal opens
+  const origSettingsClick = document.getElementById('btn-settings');
+  if (origSettingsClick) {
+    origSettingsClick.addEventListener('click', dbxSyncSettingsUI);
+  }
+
+  // --- Toolbar button listeners ---
+  const openBtn = document.getElementById('btn-dbx-open');
+  if (openBtn) {
+    openBtn.addEventListener('click', () => {
+      if (typeof dbxShowOpenModal === 'function') dbxShowOpenModal();
+    });
+  }
+
+  const saveBtn = document.getElementById('btn-dbx-save');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      if (typeof dbxSaveFile === 'function') dbxSaveFile();
+    });
+  }
+
+  // --- Open modal ---
+  const openModal = document.getElementById('dbx-open-modal');
+  const closeOpenModal = () => {
+    if (openModal) openModal.style.display = 'none';
+    focusKeyboard();
+  };
+
+  const openCloseBtn = document.getElementById('dbx-open-close');
+  if (openCloseBtn) openCloseBtn.addEventListener('click', closeOpenModal);
+
+  const openFolderBtn = document.getElementById('dbx-open-folder');
+  if (openFolderBtn) {
+    openFolderBtn.addEventListener('click', () => {
+      const current = localStorage.getItem('dbx_folder_path') || '';
+      if (typeof dbxShowFolderBrowser === 'function') dbxShowFolderBrowser(current);
+    });
+  }
+
+  if (openModal) {
+    openModal.addEventListener('click', (e) => {
+      if (e.target === openModal) closeOpenModal();
+    });
+  }
+
+  // --- Folder browser modal ---
+  const folderModal = document.getElementById('dbx-folder-modal');
+  const closeFolderModal = () => {
+    if (folderModal) folderModal.style.display = 'none';
+    focusKeyboard();
+  };
+
+  const folderCloseBtn = document.getElementById('dbx-folder-close');
+  if (folderCloseBtn) folderCloseBtn.addEventListener('click', closeFolderModal);
+
+  const folderSelectBtn = document.getElementById('dbx-folder-select');
+  if (folderSelectBtn) {
+    folderSelectBtn.addEventListener('click', () => {
+      const browsePath = folderModal._browsePath || '';
+      localStorage.setItem('dbx_folder_path', browsePath);
+      closeFolderModal();
+      dbxSyncSettingsUI();
+
+      // If the open modal is visible, refresh it with the new folder
+      if (openModal && openModal.style.display === 'flex') {
+        if (typeof dbxRenderOpenList === 'function') dbxRenderOpenList(browsePath);
+      }
+    });
+  }
+
+  if (folderModal) {
+    folderModal.addEventListener('click', (e) => {
+      if (e.target === folderModal) closeFolderModal();
+    });
+  }
+
+  // --- Save modal ---
+  const saveModal = document.getElementById('dbx-save-modal');
+  const closeSaveModal = () => {
+    if (saveModal) saveModal.style.display = 'none';
+    focusKeyboard();
+  };
+
+  const saveCancelBtn = document.getElementById('dbx-save-cancel');
+  if (saveCancelBtn) saveCancelBtn.addEventListener('click', closeSaveModal);
+
+  const saveConfirmBtn = document.getElementById('dbx-save-confirm');
+  if (saveConfirmBtn) {
+    saveConfirmBtn.addEventListener('click', async () => {
+      const input = document.getElementById('dbx-save-filename');
+      const errorEl = document.getElementById('dbx-save-error');
+      let filename = (input.value || '').trim();
+
+      if (!filename) {
+        errorEl.textContent = 'Please enter a filename.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      // Ensure .txt extension
+      if (!filename.toLowerCase().endsWith('.txt')) {
+        filename += '.txt';
+      }
+
+      filename = sanitizeFilename(filename.replace(/\.txt$/i, '')) + '.txt';
+      const folder = localStorage.getItem('dbx_folder_path') || '';
+      const path = folder + '/' + filename;
+
+      errorEl.style.display = 'none';
+      saveConfirmBtn.disabled = true;
+      saveConfirmBtn.textContent = 'Saving...';
+
+      try {
+        const content = formatContentForExport();
+        await dbxUploadFile(path, content);
+        localStorage.setItem('dbx_current_file', path);
+        closeSaveModal();
+        dbxSyncSettingsUI();
+        if (typeof dbxShowToast === 'function') dbxShowToast('Saved ' + filename);
+      } catch (err) {
+        errorEl.textContent = 'Save failed: ' + err.message;
+        errorEl.style.display = 'block';
+      } finally {
+        saveConfirmBtn.disabled = false;
+        saveConfirmBtn.textContent = 'Save';
+      }
+    });
+  }
+
+  // Handle Enter key in filename input
+  const saveFilenameInput = document.getElementById('dbx-save-filename');
+  if (saveFilenameInput) {
+    saveFilenameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (saveConfirmBtn) saveConfirmBtn.click();
+      }
+    });
+  }
+
+  if (saveModal) {
+    saveModal.addEventListener('click', (e) => {
+      if (e.target === saveModal) closeSaveModal();
+    });
+  }
+
+  // --- Initial sync ---
+  dbxSyncSettingsUI();
+};
+
 // Setup all UI interactions
 const setupUIInteractions = () => {
   setupLegendModal();
   setupSettingsModal();
   setupTextModal();
+  setupDropboxUI();
 
   // Keep keyboard focused on iPad when tapping the editor area
   // But don't steal focus if a modal is open

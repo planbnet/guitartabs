@@ -1,9 +1,10 @@
-const CACHE_NAME = 'tab-editor-v1';
+const CACHE_NAME = 'tab-editor-v2';
 const urlsToCache = [
   './tabeditor.html',
   './styles.css',
   './js/state.js',
   './js/storage.js',
+  './js/dropbox.js',
   './js/rendering.js',
   './js/editing.js',
   './js/keyboard.js',

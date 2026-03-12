@@ -29,7 +29,20 @@
   };
 
   // Application initialization
-  const init = () => {
+  const init = async () => {
+    // Handle Dropbox OAuth redirect first (before loadFromUrl checks URL params)
+    if (typeof dbxHandleRedirect === 'function') {
+      const wasRedirect = await dbxHandleRedirect();
+      if (wasRedirect) {
+        // After connecting, prompt folder selection if not set
+        if (!localStorage.getItem('dbx_folder_path')) {
+          setTimeout(() => {
+            if (typeof dbxShowFolderBrowser === 'function') dbxShowFolderBrowser('');
+          }, 500);
+        }
+      }
+    }
+
     // Try to load from URL first (shared tab), then fall back to local storage
     const loadedFromUrl = typeof loadFromUrl === "function" && loadFromUrl();
 
