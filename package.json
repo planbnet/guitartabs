@@ -1,0 +1,15 @@
+{
+  "name": "guitartabs",
+  "private": true,
+  "type": "module",
+  "description": "ASCII guitar tab editor PWA — zero-build static app; npm is used for dev tooling only",
+  "scripts": {
+    "serve": "python3 -m http.server 8000",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "lz-string": "^1.5.0",
+    "vitest": "^3.2.4"
+  }
+}

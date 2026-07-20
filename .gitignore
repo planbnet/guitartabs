@@ -1,2 +1,4 @@
 .dropbox_key
 .DS_Store
+node_modules/
+.claude/

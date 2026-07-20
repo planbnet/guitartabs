@@ -2,11 +2,11 @@
 
 **🎸 [Try it live on GitHub Pages](https://planbnet.github.io/guitartabs/)**
 
-A 99% vibe-coded lightweight, offline-capable web application for creating and editing ASCII-style guitar tablature. Works seamlessly on desktop browsers and iPad devices with full keyboard and touch support.
+A lightweight, offline-capable web application for creating and editing ASCII-style guitar tablature. Works seamlessly on desktop browsers and iPad devices with full keyboard and touch support. The UI is built on [Jelly UI](https://jelly-ui.com) — soft, tactile web components with a playful wobble.
 
 ## What It Does
 
-This editor lets you create professional guitar tabs using ASCII characters, the standard format used across the internet for sharing guitar music. You can:
+This editor lets you create guitar tabs using ASCII characters, the standard format used across the internet for sharing guitar music. You can:
 
 - **Create tab blocks**: Add tablature sections with 6 strings (standard guitar tuning: E-A-D-G-B-e)
 - **Add text blocks**: Insert lyrics, chord names, or annotations between tab sections
@@ -15,10 +15,11 @@ This editor lets you create professional guitar tabs using ASCII characters, the
 - **Navigate efficiently**: Use arrow keys, keyboard shortcuts, or mouse/touch to move around
 - **Undo mistakes**: Full undo history keeps your work safe
 - **Work offline**: Install as a Progressive Web App (PWA) and use without internet
+- **Light & dark**: Follows your OS color scheme automatically
 
 ## Import & Export
 
-The **Text** button opens a popup window that shows your entire tab as plain text. This is your hub for importing and exporting tabs:
+The **Text** button opens a dialog that shows your entire tab as plain text. This is your hub for importing and exporting tabs:
 
 ### Exporting
 1. Click the **Text** button in the toolbar
@@ -34,28 +35,17 @@ The **Text** button opens a popup window that shows your entire tab as plain tex
    - **Import Clipboard**: Paste tab text you've already copied
    - **Manual entry**: Type or paste directly into the text area, then click **Update**
 
-The parser intelligently detects tab blocks (6 consecutive lines starting with string labels like `e|`, `B|`, etc.) and text blocks. Empty lines separate blocks. Tab blocks maintain alignment while text blocks preserve line breaks.
+The parser detects tab blocks (6 consecutive lines starting with string labels like `e|`, `B|`, etc.) and text blocks. Empty lines separate blocks. A single text line directly above a tab block becomes a "docked" chord/lyric line attached to that tab.
 
 ## Share via URL
 
-The **Share** button (in the Text modal) generates a shareable URL that includes your entire tab:
+The **Share** button (in the Text dialog) generates a shareable URL that includes your entire tab:
 
 1. Click the **Text** button, then click **Share**
 2. A URL is automatically copied to your clipboard
 3. Share this URL with anyone — they can open it to instantly load your tab
 
-### How It Works
-- Tab data is compressed using [LZ-String](https://pieroxy.net/blog/pages/lz-string/index.html) algorithm
-- Compressed data is added as a URL parameter (`?tab=...`)
-- URLs are validated to stay under 2,000 characters for maximum browser compatibility
-- When someone opens a shared URL, the tab loads automatically
-
-### URL Length Considerations
-- **Small tabs** (5-10 measures): ~300-800 characters ✅
-- **Medium tabs** (10-15 measures): ~800-1,500 characters ✅  
-- **Large tabs** (20+ measures): May exceed 2,000 character limit ⚠️
-
-If your tab is too large to share via URL, use the Export function to save as a `.txt` file instead.
+Tab data is compressed with [LZ-String](https://pieroxy.net/blog/pages/lz-string/index.html) into a `?tab=...` URL parameter. URLs are validated to stay under 2,000 characters; if your tab is too large, use Export instead. The URL format is stable — old shared links keep working.
 
 ## Dropbox Integration
 
@@ -67,221 +57,126 @@ Connect to your Dropbox account to open and save tab files directly from the clo
 3. Choose a folder in your Dropbox to use as your tab library
 
 ### Usage
-- **Open**: Click the **Open** button in the toolbar to browse and load `.txt` files from your Dropbox folder
+- **Open**: Click the **Open** button in the toolbar to browse (with clickable breadcrumbs) and load `.txt` files
 - **Save**: Click the **Save** button to write back to Dropbox — previously opened files are auto-overwritten, new files prompt for a filename
 - Your selected folder and current file are remembered in localStorage across sessions
 - Tokens auto-refresh so you stay connected
 
 ## Perform Mode
 
-A fullscreen auto-scrolling view for playing along to your tabs.
+A fullscreen auto-scrolling view for playing along to your tabs. Click the amber **Perform** button; the tab is rendered read-only at the largest monospace font that fits the screen width.
 
-### Entering Perform Mode
-Click the green **Perform** button in the toolbar. The editor is replaced by a large, read-only view of your tab optimized for reading at a distance.
-
-### Scroll Behavior
-- All content (text lines and tab blocks) scrolls continuously at a steady rate
-- Speed is measured in **seconds per line** — adjustable in 0.5s increments
-- When you press Play, a brief **countdown** delays scrolling so you can read the first screen of content — a green progress bar at the top of the screen shows the remaining wait time
-- Scrolling manually during the countdown skips the wait immediately
-
-### Controls (bottom bar)
-| Button | Action |
-|--------|--------|
-| ⏮ | Reset to top |
-| ▶ / ⏸ | Play / Pause auto-scroll |
-| − / + | Decrease / Increase seconds per line |
-| ⛶ | Toggle browser fullscreen |
-| ✕ | Exit perform mode |
-
-### Keyboard Shortcuts
-| Key | Action |
-|-----|--------|
-| Space | Play / Pause |
-| + / = | Increase delay (slower) |
-| - | Decrease delay (faster) |
-| F | Toggle fullscreen |
-| ↑ / ← | Scroll up manually |
-| ↓ / → | Scroll down manually |
-| Escape | Exit perform mode |
-
-### Font Sizing
-The font is automatically calculated to be as large as possible while still fitting the full tab width on screen. It recalculates on window resize.
+- Scrolling speed is measured in **seconds per line**, adjustable in 0.5s increments
+- Pressing Play starts a **countdown** (progress bar at the top) so you can read the first screen; scrolling manually skips it
+- Controls: ⏮ reset · ▶/⏸ play/pause · −/+ speed · ⛶ fullscreen · ✕ exit
+- Keyboard: Space play/pause, +/− speed, F fullscreen, arrows scroll, Escape exit
 
 ## Chord Shape Diagrams
 
-When you type a chord name in a text block (like `C`, `Gmaj7`, or `F#m`), it becomes clickable. Clicking the chord name displays an interactive popup showing:
+Chord names typed in a docked text line (like `C`, `Gmaj7`, or `F#m`) become clickable. The popup shows a fret diagram ([vexchords](https://github.com/0xfe/vexchords)) with alternative fingerings from [chords-db](https://github.com/tombatossals/chords-db), and an **Insert** button that writes the fingering into the tab below.
 
-- **Visual fret diagram**: Rendered using [vexchords](https://github.com/0xfe/vexchords), a JavaScript library for drawing beautiful chord charts
-- **Multiple fingering positions**: Navigate through alternative ways to play the same chord using arrow buttons
-- **Chord data**: Powered by [chords-db](https://github.com/tombatossals/chords-db), a comprehensive database of guitar chord positions
+---
 
-The libraries work together: `chords-db` provides the fingering positions (which frets to press on which strings), and `vexchords` renders them as standard chord diagrams.
+## Development
 
-## Architecture
+The app is **zero-build**: plain ES modules served as static files — push to GitHub Pages to deploy. npm is used for dev tooling only.
 
-### File Structure
+```sh
+npm install        # dev dependencies (vitest)
+npm run serve      # python3 -m http.server 8000
+npm test           # unit tests (vitest)
+```
+
+> **Service worker note:** all app files are precached by `sw.js`. Whenever any cached file changes, bump `CACHE_NAME` in `sw.js` (`tab-editor-vN`) so clients pick up the new version. During local development you may need to unregister the service worker (DevTools → Application) to see changes.
+
+### Architecture
+
+Vanilla ES modules with a central mutable store and a tiny event bus. `core/` is DOM-free (unit-testable); `ui/` renders and subscribes to bus events. UI chrome uses [Jelly UI](https://jelly-ui.com) web components (vendored bundle, no build step); the monospace tab grid is custom DOM kept deliberately lightweight.
+
 ```
 guitartabs/
-├── index.html        # Main application
-├── styles.css        # Complete styling
-├── manifest.json     # PWA manifest
-├── icon-192.png      # App icon (192x192)
-├── icon-512.png      # App icon (512x512)
-└── js/               # All JavaScript files
-    ├── state.js           # Data model, cursor, undo system
-    ├── storage.js         # localStorage, import/export
-    ├── dropbox.js         # Dropbox OAuth2 PKCE + API integration
-    ├── perform.js         # Fullscreen auto-scrolling perform mode
-    ├── rendering.js       # DOM generation, updates, chord diagrams
-    ├── editing.js         # Tab operations and edit modes
-    ├── keyboard.js        # Keyboard event handling
-    ├── ui-interactions.js # Mouse/touch and modal helpers
-    ├── main.js            # Initialization and coordination
-    ├── sw.js              # Service worker for PWA offline support
+├── index.html            # Markup: jelly-theme wrapper, toolbar, dialogs
+├── styles.css            # Custom styling (grid, blocks, popups) on Jelly's palette
+├── sw.js                 # Service worker (precaches everything for offline)
+├── manifest.json         # PWA manifest
+├── package.json          # Dev tooling only (vitest)
+└── js/
+    ├── main.js           # Bootstrap: init modules, load document, register SW
+    ├── core/             # DOM-free logic (unit-tested)
+    │   ├── constants.js  #   Tunings, lengths, storage key
+    │   ├── bus.js        #   Event bus (cells-changed, structure-changed, dirty, …)
+    │   ├── model.js      #   Pure data-model helpers (docking, notes, frets)
+    │   ├── store.js      #   State + mutators (cursor, selection, undo, edit mode)
+    │   ├── editing.js    #   Tab operations (insert/delete/shift/paste/blocks)
+    │   ├── serialize.js  #   ASCII format parser/formatter, titles, filenames
+    │   ├── share.js      #   Share-URL encode/decode (stable format)
+    │   └── persistence.js#   localStorage save/load (stable key + legacy migration)
+    ├── ui/               # DOM layer
+    │   ├── editor-view.js#   Tiered rendering + event delegation (see below)
+    │   ├── selection.js  #   Drag/keyboard selection, highlight classes
+    │   ├── chords.js     #   Chord regex, popup, vexchords diagrams, insert
+    │   ├── keyboard.js   #   Global keydown router
+    │   ├── toolbar.js    #   Toolbar + jelly-segmented edit-mode control
+    │   ├── modals.js     #   Settings / Text / Legend dialogs
+    │   ├── dialogs.js    #   jelly-dialog helpers + confirmDialog()
+    │   ├── perform.js    #   Fullscreen auto-scroll mode
+    │   ├── toast.js      #   jellyToast wrapper (all notifications)
+    │   ├── tooltip.js    #   Note-name tooltip
+    │   ├── theme.js      #   meta theme-color sync with OS scheme
+    │   ├── navigation.js #   Arrow-key suppression when switching focus
+    │   └── dom.js        #   $, escapeHtml, focusKeyboard (iPad keyboard hook)
+    ├── dropbox/
+    │   ├── api.js        #   OAuth2 PKCE + Dropbox HTTP API (DOM-free)
+    │   └── ui.js         #   Browse/save dialogs, shared entry-list renderer
     └── vendor/
-        ├── vexchords.js   # Chord diagram rendering library
-        └── chords-db.js   # Guitar chord fingering database
+        ├── jelly.js      #   Jelly UI bundle (ESM, vendored for offline)
+        ├── globals.js    #   ESM adapter over the classic vendor globals
+        ├── vexchords.js  #   Chord diagram rendering (classic script)
+        ├── chords-db.js  #   Guitar chord database (classic script)
+        └── lz-string.min.js # URL-safe compression (classic script)
 ```
 
-### Data Model
+### Rendering model
+
+Rendering is tiered so typing stays cheap — there is **no full re-render per keystroke**:
+
+| Bus event | Handler | Cost |
+|---|---|---|
+| `cells-changed {block}` | `syncBlockCells(i)` — update changed cell text only | no DOM creation |
+| `cursor-changed` / `selection-changed` | class toggles on cells | trivial |
+| `structure-changed` / `document-replaced` / `linelength-changed` | `renderAll()` full rebuild | rare |
+
+All cell and block-button events are **delegated** from the `#editor` container, so rebuilds never re-attach per-cell listeners. Jelly components live only in DOM that never rebuilds on edit (toolbar, dialogs, perform overlay); per-block controls are plain buttons styled to match.
+
+### Data model
 
 ```js
 blocks = [
-  { type: 'tab', data: [string1[], string2[], ..., string6[]] },
-  { type: 'text', data: "string content" }
+  { type: 'tab',  data: [string1[], …, string6[]] },  // char grid, high e first
+  { type: 'text', data: "string content" }             // single-line + tab below = docked
 ];
-cursor = { block, stringIdx, col };
-lineLength = 80; // characters per line for tab blocks
+cur = { block, stringIdx, col };
+lineLength = 80;              // 50–120, characters per tab line
 editMode = 'replace' | 'shift' | 'insert';
 ```
 
-### Key Functions
+State is persisted to `localStorage["ascii_tab_editor_v1"]` after every change (stable format, including migration from the legacy raw-array format).
 
-| Module | Function | Purpose |
-|--------|----------|---------|
-| **state.js** | `makeEmptyBlock(len)` | Create 6-string tab block filled with `-` |
-| | `setCursor(b, s, c)` | Set cursor position and update display |
-| | `saveUndoState()` | Snapshot current state for undo history |
-| **rendering.js** | `render()` | Full DOM rebuild from blocks array |
-| | `updateCursorOnly()` | Lightweight cursor repositioning without re-render |
-| | `findChordData(name)` | Look up chord fingering positions from chords-db |
-| | `drawChordDiagram(...)` | Render chord shape using vexchords library |
-| **editing.js** | `handlePrintable(ch)` | Insert/replace character based on edit mode |
-| | `insertCharacterAtCursor()` | Cascade insert operation across blocks |
-| | `applyLength(L)` | Resize all tab blocks to new line length |
-| | `copySelectionFromBlock(idx)` | Capture rectangular tab selections |
-| | `pasteClipboardIntoBlock(idx)` | Paste clipboard data respecting edit mode |
-| **keyboard.js** | `onKeyDown(e)` | Route and handle all keyboard input |
-| **storage.js** | `save()` / `load()` | localStorage persistence |
-| | `exportToFile()` | Download current tab as `.txt` file (auto-detects title) |
-| | `importFromFile()` / `importFromClipboard()` | Parse and load external tab content |
-| | `shareTab()` | Generate compressed shareable URL |
-| | `loadFromUrl()` | Load tab from URL parameter on page load |
-| **dropbox.js** | `dbxStartAuth()` / `dbxHandleRedirect()` | OAuth2 PKCE authentication flow |
-| | `dbxOpenFile()` / `dbxSaveFile()` | Open/save files from Dropbox |
-| | `dbxListFolder()` | Browse Dropbox folder contents |
-| **perform.js** | `enterPerformMode()` / `exitPerformMode()` | Manage fullscreen overlay lifecycle |
-| | `performScrollTick()` | Hybrid scroll engine (smooth text + tab snap-out) |
-| | `calculatePerformFontSize()` | Binary search for optimal monospace font size |
+### Edit modes
 
-## DOM Structure
+- **Replace** (default): typing overwrites the cell; `|` draws a full vertical bar; bars are cleared column-wise
+- **Shift**: typing shifts all six strings right; overflow cascades into the next tab block (creating one if needed)
+- **Insert**: typing shifts only the active string, and only up to the next aligned bar line when possible (keeps measures aligned); Shift+key forces a full-line shift
 
-### Tab Block
-```html
-<div class="block tab-block">
-  <div class="block-controls">...</div>
-  <button class="block-remove-handle">×</button>
-  <div class="line">
-    <span class="label">e|</span>
-    <div class="chars">
-      <span class="ch">-</span>
-      <span class="ch cursor">5</span>
-      <!-- ... 90 chars total ... -->
-    </div>
-  </div>
-  <!-- ... 6 strings total ... -->
-</div>
-```
+### Tests
 
-### Critical CSS Classes
-- `.line` — String container (16px monospace font)
-- `.chars` — Character grid wrapper
-- `.ch` — Individual character cell
-- `.cursor` — Active cursor highlight
+`npm test` runs Vitest suites over the DOM-free core: the ASCII parser/formatter (round-trips), share-URL encoding (including a **golden pre-refactor fixture** that guards backward compatibility of shared links and saved documents), editing operations (cascade overflow, smart insert/delete, clipboard), the store (undo, selection normalization), and persistence (legacy format migration). Fixtures live in `test/fixtures/golden.json` — do not regenerate them; they encode the pre-refactor behavior.
 
-**Important**: `updateCursorOnly()` uses `querySelectorAll('.line')[index]` to avoid counting button elements.
+### Technical stack
 
-## Edit Modes
-
-### Replace Mode (default)
-- Typing replaces character at cursor
-- Vertical bars (`|`) clear entire column before replacing
-
-### Shift Mode
-- Typing inserts by shifting all six strings to the right
-- Overflow cascades to the next tab block (creating one if needed)
-- Non-active strings receive `-` at the insertion column to keep alignment
-
-### Insert Mode
-- Typing shifts only the active string while other strings stay untouched
-- Overflow still cascades along that string into following tab blocks
-- Clipboard pastes shift only the affected strings (unless all 6 strings are pasted)
-
-## Storage
-
-Application state is persisted to `localStorage` automatically after each change:
-
-```js
-localStorage["ascii_tab_editor_v1"] = JSON.stringify({
-  blocks: [...],      // Array of tab and text blocks
-  lineLength: 80,     // Current line length setting
-  cursor: { block, stringIdx, col },
-  editMode: 'replace' | 'shift' | 'insert'
-});
-```
-
-The storage system uses the key `ascii_tab_editor_v1` to maintain state across browser sessions. Content is automatically saved after every edit, ensuring no work is lost.
-
-## Extension Guidelines
-
-### Maintaining Grid Alignment
-- All DOM changes must preserve monospace consistency
-- Character cells must use `.ch` class with fixed-width font (16px Menlo/Monaco/Consolas)
-- Avoid inline styles that override CSS positioning
-- Tab blocks maintain strict character alignment across all 6 strings
-
-### Adding Features
-- **State changes**: Use `saveUndoState()` before mutations to enable undo
-- **Display updates**: Call `render()` for full updates or `updateCursorOnly()` for cursor-only changes
-- **Persistence**: Call `save()` after data changes to update localStorage
-- **Module placement**:
-  - Data operations → `editing.js`
-  - UI elements → `ui-interactions.js` or `rendering.js`
-  - Input handling → `keyboard.js`
-  - Storage/import/export → `storage.js`
-
-### Common Pitfalls
-- **Cursor offset**: Button elements in `.block` affect child indexing — use `querySelectorAll('.line')` not `:nth-child()`
-- **Insert mode**: Must fill non-active strings with `-` when shifting to maintain alignment
-- **Vertical bars**: Clear entire column before modifying individual string
-- **Chord detection**: Chord names are clickable only in text blocks, not within tab notation
-
-### Event Binding
-- Click handlers bound during `render()` in `rendering.js`
-- Global keyboard events in `keyboard.js` via `document.addEventListener`
-- Modal interactions setup in `ui-interactions.js`
-- Chord popup interactions managed in `rendering.js`
-
-## Technical Stack
-
-- **Languages**: Vanilla JavaScript (ES6+), HTML5, CSS3
-- **Frameworks**: None (zero framework dependencies)
-- **Storage**: localStorage API for persistence
-- **Offline Support**: Service Worker (PWA)
-- **Libraries**: 
-  - [vexchords](https://github.com/0xfe/vexchords) - SVG chord diagram rendering
-  - [chords-db](https://github.com/tombatossals/chords-db) - Comprehensive chord position database
-  - [lz-string](https://pieroxy.net/blog/pages/lz-string/index.html) - URL-safe compression for sharing
-- **Compatibility**: Modern desktop browsers + iPad Safari/Chrome
-- **Build Tools**: None required (runs directly in browser)
+- Vanilla JavaScript (ES modules), HTML5, CSS3 — no framework, no build step
+- [Jelly UI](https://jelly-ui.com) web components for the chrome (vendored)
+- [vexchords](https://github.com/0xfe/vexchords) + [chords-db](https://github.com/tombatossals/chords-db) for chord diagrams
+- [lz-string](https://pieroxy.net/blog/pages/lz-string/index.html) for share URLs
+- Service worker PWA (offline-capable), localStorage persistence
+- Compatibility: modern desktop browsers + iPad Safari/Chrome

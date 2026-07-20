@@ -1,99 +1,98 @@
-// === Main Application Initialization ===
+// Application bootstrap: wire up modules, load the document, register the
+// service worker.
 
-(() => {
-  // Button event listeners
-  const setupButtonListeners = () => {
-    document.getElementById("btn-new-line").addEventListener("click", newLineBlock);
-    document.getElementById("btn-new-text").addEventListener("click", newTextBlock);
-    document.getElementById("btn-mode-toggle").addEventListener("click", toggleEditMode);
-    document.getElementById("btn-undo").addEventListener("click", undo);
-    document.getElementById("inp-len").addEventListener("input", (e) => {
-      const L = parseInt(e.target.value, 10);
-      if (!isNaN(L) && L >= 50 && L <= 120) {
-        applyLength(L);
-      }
-    });
-    document.getElementById("btn-clear").addEventListener("click", clearAll);
-    document.getElementById("btn-perform").addEventListener("click", () => {
-      if (typeof enterPerformMode === 'function') enterPerformMode();
-    });
-  };
+import "./vendor/jelly.js";
+import { state, replaceDocument, saveUndoState } from "./core/store.js";
+import { decodeShare } from "./core/share.js";
+import { load, initPersistence } from "./core/persistence.js";
+import { focusKeyboard } from "./ui/dom.js";
+import { initTheme } from "./ui/theme.js";
+import { initTooltip } from "./ui/tooltip.js";
+import { initChords } from "./ui/chords.js";
+import { initSelection } from "./ui/selection.js";
+import { initEditorView } from "./ui/editor-view.js";
+import { initKeyboard } from "./ui/keyboard.js";
+import { initToolbar } from "./ui/toolbar.js";
+import { initModals } from "./ui/modals.js";
+import { toast } from "./ui/toast.js";
+import * as dbx from "./dropbox/api.js";
+import { initDropboxUI, showFolderBrowser } from "./dropbox/ui.js";
 
-  // Global event listeners
-  const setupGlobalListeners = () => {
-    document.addEventListener("keydown", onKeyDown);
+// Load a shared document from a ?tab= URL parameter, then clean the URL.
+const loadFromUrl = () => {
+  const params = new URLSearchParams(window.location.search);
+  const compressed = params.get("tab");
+  if (!compressed) return false;
 
-    // Hide tooltip on any click
-    document.addEventListener("click", () => {
-      if (typeof hideNoteTooltip === "function") {
-        hideNoteTooltip();
-      }
-    });
-  };
+  const shared = decodeShare(compressed);
+  if (!shared) {
+    console.error("Failed to load shared tab from URL");
+    return false;
+  }
 
-  // Application initialization
-  const init = async () => {
-    // Handle Dropbox OAuth redirect first (before loadFromUrl checks URL params)
-    if (typeof dbxHandleRedirect === 'function') {
-      const wasRedirect = await dbxHandleRedirect();
-      if (wasRedirect) {
-        // After connecting, prompt folder selection if not set
-        if (!localStorage.getItem('dbx_folder_path')) {
-          setTimeout(() => {
-            if (typeof dbxShowFolderBrowser === 'function') dbxShowFolderBrowser('');
-          }, 500);
+  replaceDocument(shared);
+
+  const cleanUrl = new URL(window.location.href);
+  cleanUrl.searchParams.delete("tab");
+  window.history.replaceState({}, "", cleanUrl.toString());
+  return true;
+};
+
+const registerServiceWorker = () => {
+  if (!("serviceWorker" in navigator)) return;
+  window.addEventListener("load", async () => {
+    try {
+      // Clean up the old registration that was scoped to /js/.
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const reg of registrations) {
+        if (new URL(reg.scope).pathname.endsWith("/js/")) {
+          await reg.unregister();
         }
       }
+      await navigator.serviceWorker.register("./sw.js");
+    } catch (err) {
+      console.warn("Service Worker registration failed:", err);
     }
+  });
+};
 
-    // Try to load from URL first (shared tab), then fall back to local storage
-    const loadedFromUrl = typeof loadFromUrl === "function" && loadFromUrl();
+const init = async () => {
+  initPersistence();
+  initTheme();
+  initTooltip();
+  initChords();
+  initSelection();
+  initEditorView();
+  initKeyboard();
+  initToolbar();
+  initModals();
+  initDropboxUI();
 
-    if (!loadedFromUrl) {
-      // Load saved data or create initial content
-      if (!load()) {
-        blocks.push(makeEmptyBlock(lineLength));
-      } else {
-        // reflect stored length in UI
-        document.getElementById("inp-len").value = String(lineLength);
-      }
+  // Dropbox OAuth redirect must be handled before the URL is inspected
+  // for shared tabs.
+  try {
+    const wasRedirect = await dbx.handleRedirect();
+    if (wasRedirect && dbx.getFolderPath() == null) {
+      setTimeout(() => showFolderBrowser(""), 500);
     }
-
-    // Initialize mode button state
-    const modeBtn = document.getElementById("btn-mode-toggle");
-    if (editMode === 'shift') {
-      modeBtn.textContent = "Shift";
-      modeBtn.classList.remove('insert-mode');
-      modeBtn.classList.add('shift-mode');
-    } else if (editMode === 'insert') {
-      modeBtn.textContent = "Insert";
-      modeBtn.classList.remove('shift-mode');
-      modeBtn.classList.add('insert-mode');
-    } else {
-      modeBtn.textContent = "Replace";
-      modeBtn.classList.remove('insert-mode', 'shift-mode');
-    }
-
-    ensureAtLeastOneBlock();
-    render();
-    focusKeyboard();
-
-    // Save initial state for undo
-    setTimeout(() => saveUndoState(), 100);
-  };
-
-  // Start the application
-  const start = () => {
-    setupButtonListeners();
-    setupGlobalListeners();
-    setupUIInteractions();
-    init();
-  };
-
-  // Wait for DOM to be ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', start);
-  } else {
-    start();
+  } catch (err) {
+    console.error("Dropbox auth error:", err);
+    toast("Failed to connect to Dropbox. Please try again.", "danger");
   }
-})();
+
+  if (!loadFromUrl()) {
+    replaceDocument(load() || { blocks: [] });
+  }
+
+  focusKeyboard();
+  registerServiceWorker();
+
+  // Baseline snapshot so the first edit can be undone.
+  setTimeout(() => saveUndoState(), 100);
+};
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
+}

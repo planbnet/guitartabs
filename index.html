@@ -8,7 +8,7 @@
 
   <!-- PWA Configuration -->
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#2a2a2a" />
+  <meta name="theme-color" content="#101318" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Tab Editor" />
@@ -18,201 +18,201 @@
 </head>
 
 <body>
-  <div class="toolbar">
-    <button id="btn-new-line" class="primary">Add Tab</button>
-    <button id="btn-new-text" class="primary">Add Text</button>
-    <button id="btn-mode-toggle" class="mode-btn">Replace</button>
-    <button id="btn-undo">Undo</button>
-    <button id="btn-text-modal">Text</button>
-    <button id="btn-clear" class="danger">Clear</button>
-    <button id="btn-dbx-open" class="dbx-btn" style="display:none;">Open</button>
-    <button id="btn-dbx-save" class="dbx-btn" style="display:none;">Save</button>
-    <button id="btn-perform" class="perform-btn">Perform</button>
-    <button id="btn-legend" class="align-right">Legend</button>
-    <button id="btn-settings" class="secondary">Settings</button>
-    <input id="inp-len" type="number" min="50" max="120" step="1" value="80" class="hidden-control"
-      aria-hidden="true" />
-  </div>
+  <jelly-theme mode="auto">
 
-  <div id="settings-modal" class="modal" role="dialog" aria-modal="true">
-    <div class="card small">
+    <header class="toolbar">
+      <jelly-button id="btn-new-line" size="small" variant="mint" class="tb-btn">Add Tab</jelly-button>
+      <jelly-button id="btn-new-text" size="small" variant="azure" class="tb-btn">Add Text</jelly-button>
+      <jelly-segmented id="mode-control" size="small" label="Edit mode" value="replace">
+        <jelly-segment value="replace" selected>Replace</jelly-segment>
+        <jelly-segment value="shift">Shift</jelly-segment>
+        <jelly-segment value="insert">Insert</jelly-segment>
+      </jelly-segmented>
+      <jelly-button id="btn-undo" size="small" variant="platinum" class="tb-btn">Undo</jelly-button>
+      <jelly-button id="btn-text-modal" size="small" variant="platinum" class="tb-btn">Text</jelly-button>
+      <jelly-button id="btn-clear" size="small" variant="rose" class="tb-btn">Clear</jelly-button>
+      <jelly-button id="btn-dbx-open" size="small" variant="platinum" class="tb-btn is-hidden">Open</jelly-button>
+      <jelly-button id="btn-dbx-save" size="small" variant="platinum" class="tb-btn is-hidden">Save</jelly-button>
+      <jelly-button id="btn-perform" size="small" variant="amber" class="tb-btn">Perform</jelly-button>
+      <span class="toolbar-spacer"></span>
+      <jelly-button id="btn-legend" size="small" variant="platinum" class="tb-btn">Legend</jelly-button>
+      <jelly-icon-button id="btn-settings" size="small" variant="graphite" label="Settings"></jelly-icon-button>
+    </header>
+
+    <div class="wrap">
+      <div id="editor"></div>
+    </div>
+
+    <!-- Hidden input to capture keyboard on iPad -->
+    <input id="kbd" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" />
+
+    <!-- Hidden file input for importing -->
+    <input id="file-input" type="file" accept=".txt" class="is-hidden" />
+
+    <!-- Settings -->
+    <jelly-dialog id="settings-modal" label="Settings">
       <h3>Settings</h3>
       <div class="settings-row">
         <span>Line length</span>
-        <div class="settings-len-controls">
-          <button id="settings-len-dec" class="btn">−</button>
-          <span id="settings-len-display">80</span>
-          <button id="settings-len-inc" class="btn">+</button>
+        <div class="settings-controls">
+          <jelly-slider id="settings-len-slider" size="small" min="50" max="120" step="10" value="80"
+            label="Line length"></jelly-slider>
+          <span id="settings-len-display" class="settings-len-value">80</span>
         </div>
       </div>
-      <hr class="settings-divider" />
-      <h4 class="settings-section-title">Dropbox</h4>
+      <jelly-divider>Dropbox</jelly-divider>
       <div id="dbx-disconnected-section">
         <p class="dbx-hint">Connect to Dropbox to open and save tabs directly.</p>
-        <div style="display:flex; gap:.5rem; justify-content:flex-end;">
-          <button id="dbx-connect" class="btn primary">Connect to Dropbox</button>
+        <div class="dialog-actions">
+          <jelly-button id="dbx-connect" size="small" variant="azure" class="tb-btn">Connect to Dropbox</jelly-button>
         </div>
       </div>
-      <div id="dbx-connected-section" style="display:none;">
+      <div id="dbx-connected-section" class="is-hidden">
         <div class="settings-row">
           <span>Status</span>
-          <span class="dbx-status-connected">Connected</span>
+          <jelly-badge variant="mint">Connected</jelly-badge>
         </div>
         <div class="settings-row">
           <span>Folder</span>
-          <div class="settings-len-controls">
+          <div class="settings-controls">
             <span id="dbx-folder-display" class="dbx-folder-text">Not set</span>
-            <button id="dbx-change-folder" class="btn">Change</button>
+            <jelly-button id="dbx-change-folder" size="small" variant="platinum" class="tb-btn">Change</jelly-button>
           </div>
         </div>
-        <div id="dbx-current-file-row" class="settings-row" style="display:none;">
+        <div id="dbx-current-file-row" class="settings-row is-hidden">
           <span>File</span>
           <span id="dbx-current-file-display" class="dbx-current-file"></span>
         </div>
-        <div style="display:flex; gap:.5rem; justify-content:flex-end;">
-          <button id="dbx-disconnect" class="btn danger-text">Disconnect</button>
+        <div class="dialog-actions">
+          <jelly-button id="dbx-disconnect" size="small" variant="rose" class="tb-btn">Disconnect</jelly-button>
         </div>
       </div>
-
-      <div style="display:flex; gap:.5rem; justify-content:flex-end; margin-top:.75rem;">
-        <button id="settings-close" class="btn">Close</button>
+      <div class="dialog-actions">
+        <jelly-button id="settings-close" size="small" variant="platinum" class="tb-btn">Close</jelly-button>
       </div>
-    </div>
-  </div>
+    </jelly-dialog>
 
-  <div id="text-modal" class="modal" role="dialog" aria-modal="true">
-    <div class="card text-modal-card">
+    <!-- Tab text (export / import / share) -->
+    <jelly-dialog id="text-modal" label="Tab Text" class="text-dialog">
       <h3>Tab Text</h3>
       <textarea id="text-modal-content" class="text-modal-area" spellcheck="false"></textarea>
       <div class="text-modal-actions">
         <div class="text-modal-left">
-          <button id="text-export" class="btn">Export</button>
-          <button id="text-import" class="btn">Import File</button>
-          <button id="text-import-clipboard" class="btn">Import Clipboard</button>
-          <button id="text-share" class="btn">Share</button>
+          <jelly-button id="text-export" size="small" variant="platinum" class="tb-btn">Export</jelly-button>
+          <jelly-button id="text-import" size="small" variant="platinum" class="tb-btn">Import File</jelly-button>
+          <jelly-button id="text-import-clipboard" size="small" variant="platinum" class="tb-btn">Import
+            Clipboard</jelly-button>
+          <jelly-button id="text-share" size="small" variant="azure" class="tb-btn">Share</jelly-button>
         </div>
         <div class="text-modal-right">
-          <button id="text-cancel" class="btn">Close</button>
-          <button id="text-update" class="btn primary">Update</button>
+          <jelly-button id="text-cancel" size="small" variant="platinum" class="tb-btn">Close</jelly-button>
+          <jelly-button id="text-update" size="small" variant="mint" class="tb-btn">Update</jelly-button>
         </div>
       </div>
-    </div>
-  </div>
+    </jelly-dialog>
 
-  <div class="wrap">
-    <div id="editor"></div>
-  </div>
-
-  <!-- Hidden input to capture keyboard on iPad -->
-  <input id="kbd" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" />
-
-  <!-- Hidden file input for importing -->
-  <input id="file-input" type="file" accept=".txt" style="display: none;" />
-
-  <!-- Legend Modal -->
-  <div id="legend" class="modal" role="dialog" aria-modal="true">
-    <div class="card">
-      <h3>Tab Legend (click to insert)</h3>
+    <!-- Legend -->
+    <jelly-dialog id="legend" label="Tab Legend">
+      <h3>Tab Legend <span class="legend-sub">(click to insert)</span></h3>
       <div class="legend-grid">
-        <button class="legend-btn" data-symbol="h">h = hammer-on (e.g., 0h2)</button>
-        <button class="legend-btn" data-symbol="p">p = pull-off (e.g., 3p0)</button>
-        <button class="legend-btn" data-symbol="b">b = bend (e.g., 7b9)</button>
-        <button class="legend-btn" data-symbol="r">r = bend release (e.g., 9r7)</button>
-        <button class="legend-btn" data-symbol="/">/ = slide up (e.g., 5/7)</button>
-        <button class="legend-btn" data-symbol="\">\ = slide down (e.g., 7\5)</button>
-        <button class="legend-btn" data-symbol="~">~ = vibrato (e.g., 12~~~)</button>
-        <button class="legend-btn" data-symbol="x">x = dead note (muted)</button>
-        <button class="legend-btn" data-symbol="|">| = bar / divider</button>
-        <button class="legend-btn" data-symbol="(">( = bend start (e.g., 5(7))</button>
-        <button class="legend-btn" data-symbol=")">) = bend end</button>
+        <jelly-button class="legend-btn" data-symbol="h" size="small" shape="square" variant="platinum">h = hammer-on
+          (e.g., 0h2)</jelly-button>
+        <jelly-button class="legend-btn" data-symbol="p" size="small" shape="square" variant="platinum">p = pull-off
+          (e.g., 3p0)</jelly-button>
+        <jelly-button class="legend-btn" data-symbol="b" size="small" shape="square" variant="platinum">b = bend (e.g.,
+          7b9)</jelly-button>
+        <jelly-button class="legend-btn" data-symbol="r" size="small" shape="square" variant="platinum">r = bend
+          release (e.g., 9r7)</jelly-button>
+        <jelly-button class="legend-btn" data-symbol="/" size="small" shape="square" variant="platinum">/ = slide up
+          (e.g., 5/7)</jelly-button>
+        <jelly-button class="legend-btn" data-symbol="\" size="small" shape="square" variant="platinum">\ = slide down
+          (e.g., 7\5)</jelly-button>
+        <jelly-button class="legend-btn" data-symbol="~" size="small" shape="square" variant="platinum">~ = vibrato
+          (e.g., 12~~~)</jelly-button>
+        <jelly-button class="legend-btn" data-symbol="x" size="small" shape="square" variant="platinum">x = dead note
+          (muted)</jelly-button>
+        <jelly-button class="legend-btn" data-symbol="|" size="small" shape="square" variant="platinum">| = bar /
+          divider</jelly-button>
+        <jelly-button class="legend-btn" data-symbol="(" size="small" shape="square" variant="platinum">( = bend start
+          (e.g., 5(7))</jelly-button>
+        <jelly-button class="legend-btn" data-symbol=")" size="small" shape="square" variant="platinum">) = bend
+          end</jelly-button>
       </div>
       <div class="legend-info">
         <p><strong>Tips:</strong>
           <br>Natural harmonics: &lt;12&gt;
           <br>Palm mute: PM above notes
-          <br>You can double click to insert a tab bar line |
+          <br>Double-click a cell to insert a bar line <span class="legend-code">|</span>
+          <br>Cycle edit modes with <jelly-kbd key="Tab" size="small">Tab</jelly-kbd> &nbsp;·&nbsp; undo with
+          <jelly-kbd key="Meta" size="small">⌘</jelly-kbd><jelly-kbd key="z" size="small">Z</jelly-kbd>
         </p>
       </div>
-      <div style="display:flex; gap:.5rem; justify-content:flex-end; margin-top:.75rem;">
-        <button id="legend-close" class="btn">Close</button>
+      <div class="dialog-actions">
+        <jelly-button id="legend-close" size="small" variant="platinum" class="tb-btn">Close</jelly-button>
       </div>
-    </div>
-  </div>
+    </jelly-dialog>
 
-  <!-- Dropbox Open Modal -->
-  <div id="dbx-open-modal" class="modal" role="dialog" aria-modal="true">
-    <div class="card dbx-open-card">
+    <!-- Dropbox: open file -->
+    <jelly-dialog id="dbx-open-modal" label="Open from Dropbox" class="dbx-dialog">
       <h3>Open from Dropbox</h3>
-      <div id="dbx-open-path" class="dbx-path-display"></div>
+      <jelly-breadcrumbs id="dbx-open-path" size="small"></jelly-breadcrumbs>
       <div id="dbx-open-list" class="dbx-file-list"></div>
-      <div id="dbx-open-loading" class="dbx-loading" style="display:none;">Loading...</div>
-      <div id="dbx-open-error" class="dbx-error" style="display:none;"></div>
-      <div style="display:flex; gap:.5rem; justify-content:flex-end; margin-top:.75rem;">
-        <button id="dbx-open-folder" class="btn">Change Folder</button>
-        <button id="dbx-open-close" class="btn">Close</button>
+      <div id="dbx-open-loading" class="dbx-loading is-hidden">
+        <jelly-spinner size="small" label="Loading"></jelly-spinner>
       </div>
-    </div>
-  </div>
+      <jelly-alert id="dbx-open-error" tone="danger" size="small" class="is-hidden"></jelly-alert>
+      <div class="dialog-actions">
+        <jelly-button id="dbx-open-folder" size="small" variant="platinum" class="tb-btn">Change Folder</jelly-button>
+        <jelly-button id="dbx-open-close" size="small" variant="platinum" class="tb-btn">Close</jelly-button>
+      </div>
+    </jelly-dialog>
 
-  <!-- Dropbox Folder Browser Modal -->
-  <div id="dbx-folder-modal" class="modal" role="dialog" aria-modal="true">
-    <div class="card dbx-folder-card">
+    <!-- Dropbox: choose folder -->
+    <jelly-dialog id="dbx-folder-modal" label="Select Dropbox Folder" class="dbx-dialog">
       <h3>Select Dropbox Folder</h3>
-      <div id="dbx-folder-path" class="dbx-path-display"></div>
+      <jelly-breadcrumbs id="dbx-folder-path" size="small"></jelly-breadcrumbs>
       <div id="dbx-folder-list" class="dbx-file-list"></div>
-      <div id="dbx-folder-loading" class="dbx-loading" style="display:none;">Loading...</div>
-      <div id="dbx-folder-error" class="dbx-error" style="display:none;"></div>
-      <div style="display:flex; gap:.5rem; justify-content:flex-end; margin-top:.75rem;">
-        <button id="dbx-folder-select" class="btn primary">Select This Folder</button>
-        <button id="dbx-folder-close" class="btn">Cancel</button>
+      <div id="dbx-folder-loading" class="dbx-loading is-hidden">
+        <jelly-spinner size="small" label="Loading"></jelly-spinner>
       </div>
-    </div>
-  </div>
+      <jelly-alert id="dbx-folder-error" tone="danger" size="small" class="is-hidden"></jelly-alert>
+      <div class="dialog-actions">
+        <jelly-button id="dbx-folder-select" size="small" variant="mint" class="tb-btn">Select This
+          Folder</jelly-button>
+        <jelly-button id="dbx-folder-close" size="small" variant="platinum" class="tb-btn">Cancel</jelly-button>
+      </div>
+    </jelly-dialog>
 
-  <!-- Dropbox Save Modal -->
-  <div id="dbx-save-modal" class="modal" role="dialog" aria-modal="true">
-    <div class="card small">
+    <!-- Dropbox: save as -->
+    <jelly-dialog id="dbx-save-modal" label="Save to Dropbox">
       <h3>Save to Dropbox</h3>
       <div class="settings-row">
-        <span>Filename</span>
-        <input id="dbx-save-filename" type="text" class="dbx-filename-input" placeholder="my-tab.txt" />
+        <jelly-label for="dbx-save-filename">Filename</jelly-label>
+        <jelly-input id="dbx-save-filename" size="small" placeholder="my-tab.txt" no-autofill></jelly-input>
       </div>
-      <div id="dbx-save-error" class="dbx-error" style="display:none;"></div>
-      <div style="display:flex; gap:.5rem; justify-content:flex-end;">
-        <button id="dbx-save-cancel" class="btn">Cancel</button>
-        <button id="dbx-save-confirm" class="btn primary">Save</button>
+      <jelly-alert id="dbx-save-error" tone="danger" size="small" class="is-hidden"></jelly-alert>
+      <div class="dialog-actions">
+        <jelly-button id="dbx-save-cancel" size="small" variant="platinum" class="tb-btn">Cancel</jelly-button>
+        <jelly-button id="dbx-save-confirm" size="small" variant="mint" class="tb-btn">Save</jelly-button>
       </div>
-    </div>
-  </div>
+    </jelly-dialog>
 
-  <!-- Note tooltip -->
-  <div id="note-tooltip"></div>
-  <div id="chord-popup"></div>
+    <!-- Toast rail (jellyToast() reuses this instance) -->
+    <jelly-toaster position="bottom"></jelly-toaster>
 
-  <!-- Include JavaScript modules in dependency order -->
+    <!-- Anchored overlays -->
+    <div id="note-tooltip"></div>
+    <div id="chord-popup"></div>
+
+  </jelly-theme>
+
+  <!-- Classic vendor scripts (attach globals; consumed via js/vendor/globals.js) -->
   <script src="js/vendor/lz-string.min.js"></script>
   <script src="js/vendor/vexchords.js"></script>
   <script src="js/vendor/chords-db.js"></script>
-  <script src="js/state.js"></script>
-  <script src="js/storage.js"></script>
-  <script src="js/dropbox.js"></script>
-  <script src="js/rendering.js"></script>
-  <script src="js/perform.js"></script>
-  <script src="js/editing.js"></script>
-  <script src="js/keyboard.js"></script>
-  <script src="js/ui-interactions.js"></script>
-  <script src="js/main.js"></script>
 
-  <!-- PWA Service Worker Registration -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./js/sw.js')
-          .then(reg => console.log('Service Worker registered'))
-          .catch(err => console.log('Service Worker registration failed:', err));
-      });
-    }
-  </script>
+  <!-- Application (ES modules) -->
+  <script type="module" src="js/main.js"></script>
 </body>
 
 </html>
