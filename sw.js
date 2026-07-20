@@ -1,7 +1,7 @@
 // Service worker: precaches the whole app so it works offline as a PWA.
 // Bump CACHE_NAME whenever any cached file changes.
 
-const CACHE_NAME = "tab-editor-v4";
+const CACHE_NAME = "tab-editor-v5";
 
 const urlsToCache = [
   "./",
@@ -31,6 +31,7 @@ const urlsToCache = [
   "./js/ui/modals.js",
   "./js/ui/dialogs.js",
   "./js/ui/perform.js",
+  "./js/ui/pdf.js",
   "./js/ui/toast.js",
   "./js/dropbox/api.js",
   "./js/dropbox/ui.js",

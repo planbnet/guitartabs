@@ -10,6 +10,7 @@ import { emit } from "../core/bus.js";
 import { jellyIcon } from "../vendor/jelly.js";
 import { $, focusKeyboard, isAnyDialogOpen } from "./dom.js";
 import { openDialog, closeDialog } from "./dialogs.js";
+import { exportToPdf } from "./pdf.js";
 import { toast } from "./toast.js";
 import { syncSettingsUI, clearCurrentFile } from "../dropbox/ui.js";
 
@@ -105,6 +106,11 @@ const setupTextDialog = () => {
   });
 
   $("text-export").addEventListener("click", () => exportToFile(textarea.value));
+
+  $("text-pdf").addEventListener("click", () => {
+    const parsed = parseImportedContent(textarea.value, state.lineLength);
+    exportToPdf(parsed.blocks, { lineLength: parsed.lineLength, title: extractTitle(textarea.value) });
+  });
 
   $("text-import").addEventListener("click", () => {
     if (!fileInput) return;

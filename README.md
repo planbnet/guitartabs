@@ -27,6 +27,9 @@ The **Text** button opens a dialog that shows your entire tab as plain text. Thi
 3. Click **Export** to download as a `.txt` file
    - If the first line is text followed by an empty line, it will be used as the filename
    - Otherwise, defaults to `guitar-tab.txt`
+4. Click **PDF** to open your browser's print dialog (choose "Save as PDF")
+   - The font is scaled so a full tab line fits the page width
+   - Tab blocks never split across a page break, and stay with their docked chord/lyric line above (and a single annotation line below)
 
 ### Importing
 1. Click the **Text** button in the toolbar
