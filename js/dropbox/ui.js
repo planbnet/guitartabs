@@ -109,6 +109,11 @@ const renderPathEl = (el, path, onNavigate) => {
   });
 };
 
+// A remembered/selected folder can vanish from Dropbox between sessions
+// (deleted or moved elsewhere). Recognize that specific failure so callers
+// can fall back to root instead of leaving the user stuck on an error.
+const isPathNotFoundError = (err) => /not_found/i.test(err.message || "");
+
 // Renders folders (and optionally .txt files) into `listEl`.
 const renderEntryList = async ({ path, listEl, pathEl, loadingEl, errorEl, showFiles, onNavigate, onPickFile }) => {
   listEl.innerHTML = "";
@@ -177,6 +182,18 @@ const renderEntryList = async ({ path, listEl, pathEl, loadingEl, errorEl, showF
       listEl.appendChild(empty);
     }
   } catch (err) {
+    // The folder we were about to list no longer exists — fall back to the
+    // root folder instead of leaving the user stuck on a dead-end error.
+    if (path && isPathNotFoundError(err)) {
+      if (path === dbx.getFolderPath()) {
+        dbx.setFolderPath("");
+        syncSettingsUI();
+      }
+      toast("That Dropbox folder no longer exists — showing the root folder instead.", "warning");
+      onNavigate("");
+      return;
+    }
+
     loadingEl.classList.add("is-hidden");
     errorEl.textContent = err.message;
     errorEl.classList.remove("is-hidden");
