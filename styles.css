@@ -504,6 +504,17 @@ jelly-dialog h3 {
   font-size: 17px;
 }
 
+/* Jelly's canvas-painted controls (buttons, sliders, ...) intentionally
+   paint a much larger canvas than their visible box, so the "wobble"
+   press/release animation can overshoot without clipping. That invisible
+   bleed still counts toward this wrapper's scrollable-overflow area, so
+   without clipping it here every dialog gets a few pixels of pointless
+   scroll. `overflow: clip` drops the invisible bleed without affecting
+   this wrapper's own (visible-content-driven) size. */
+.dialog-body {
+  overflow: clip;
+}
+
 .dialog-actions {
   display: flex;
   gap: 0.5rem;

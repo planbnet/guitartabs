@@ -33,10 +33,12 @@ export const confirmDialog = ({ message, confirmLabel = "OK", cancelLabel = "Can
     const dialog = document.createElement("jelly-dialog");
     dialog.setAttribute("label", "Confirm");
     dialog.innerHTML = `
-      <p class="confirm-message"></p>
-      <div class="dialog-actions">
-        <jelly-button size="small" variant="platinum" data-role="cancel" class="tb-btn"></jelly-button>
-        <jelly-button size="small" variant="rose" data-role="confirm" class="tb-btn"></jelly-button>
+      <div class="dialog-body">
+        <p class="confirm-message"></p>
+        <div class="dialog-actions">
+          <jelly-button size="small" variant="platinum" data-role="cancel" class="tb-btn"></jelly-button>
+          <jelly-button size="small" variant="rose" data-role="confirm" class="tb-btn"></jelly-button>
+        </div>
       </div>
     `;
     dialog.querySelector(".confirm-message").textContent = message;

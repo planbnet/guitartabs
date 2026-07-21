@@ -51,6 +51,7 @@
 
     <!-- Settings -->
     <jelly-dialog id="settings-modal" label="Settings">
+      <div class="dialog-body">
       <h3>Settings</h3>
       <div class="settings-row">
         <span>Line length</span>
@@ -90,10 +91,12 @@
       <div class="dialog-actions">
         <jelly-button id="settings-close" size="small" variant="platinum" class="tb-btn">Close</jelly-button>
       </div>
+      </div>
     </jelly-dialog>
 
     <!-- Tab text (export / import / share) -->
     <jelly-dialog id="text-modal" label="Tab Text" class="text-dialog">
+      <div class="dialog-body">
       <h3>Tab Text</h3>
       <textarea id="text-modal-content" class="text-modal-area" spellcheck="false"></textarea>
       <div class="text-modal-actions">
@@ -110,10 +113,12 @@
           <jelly-button id="text-update" size="small" variant="mint" class="tb-btn">Update</jelly-button>
         </div>
       </div>
+      </div>
     </jelly-dialog>
 
     <!-- Legend -->
     <jelly-dialog id="legend" label="Tab Legend">
+      <div class="dialog-body">
       <h3>Tab Legend <span class="legend-sub">(click to insert)</span></h3>
       <div class="legend-grid">
         <jelly-button class="legend-btn" data-symbol="h" size="small" shape="square" variant="platinum">h = hammer-on
@@ -151,10 +156,12 @@
       <div class="dialog-actions">
         <jelly-button id="legend-close" size="small" variant="platinum" class="tb-btn">Close</jelly-button>
       </div>
+      </div>
     </jelly-dialog>
 
     <!-- Dropbox: open file -->
     <jelly-dialog id="dbx-open-modal" label="Open from Dropbox" class="dbx-dialog">
+      <div class="dialog-body">
       <h3>Open from Dropbox</h3>
       <jelly-breadcrumbs id="dbx-open-path" size="small"></jelly-breadcrumbs>
       <div id="dbx-open-list" class="dbx-file-list"></div>
@@ -166,10 +173,12 @@
         <jelly-button id="dbx-open-folder" size="small" variant="platinum" class="tb-btn">Change Folder</jelly-button>
         <jelly-button id="dbx-open-close" size="small" variant="platinum" class="tb-btn">Close</jelly-button>
       </div>
+      </div>
     </jelly-dialog>
 
     <!-- Dropbox: choose folder -->
     <jelly-dialog id="dbx-folder-modal" label="Select Dropbox Folder" class="dbx-dialog">
+      <div class="dialog-body">
       <h3>Select Dropbox Folder</h3>
       <jelly-breadcrumbs id="dbx-folder-path" size="small"></jelly-breadcrumbs>
       <div id="dbx-folder-list" class="dbx-file-list"></div>
@@ -182,10 +191,12 @@
           Folder</jelly-button>
         <jelly-button id="dbx-folder-close" size="small" variant="platinum" class="tb-btn">Cancel</jelly-button>
       </div>
+      </div>
     </jelly-dialog>
 
     <!-- Dropbox: save as -->
     <jelly-dialog id="dbx-save-modal" label="Save to Dropbox">
+      <div class="dialog-body">
       <h3>Save to Dropbox</h3>
       <div class="settings-row">
         <jelly-label for="dbx-save-filename">Filename</jelly-label>
@@ -195,6 +206,7 @@
       <div class="dialog-actions">
         <jelly-button id="dbx-save-cancel" size="small" variant="platinum" class="tb-btn">Cancel</jelly-button>
         <jelly-button id="dbx-save-confirm" size="small" variant="mint" class="tb-btn">Save</jelly-button>
+      </div>
       </div>
     </jelly-dialog>
 
