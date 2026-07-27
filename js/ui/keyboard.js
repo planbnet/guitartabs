@@ -35,6 +35,8 @@ import { hideNoteTooltip } from "./tooltip.js";
 import { focusDockedTextLine } from "./editor-view.js";
 import { consumeArrowSuppression } from "./navigation.js";
 import { isPerformActive } from "./perform.js";
+import { handleListeningKey, isListeningActive } from "./listen.js";
+import { isAnyDialogOpen } from "./dom.js";
 
 const isPrintable = (e) => {
   if (e.ctrlKey || e.metaKey) return false;
@@ -44,6 +46,11 @@ const isPrintable = (e) => {
 const onKeyDown = (e) => {
   // Perform mode has its own handler.
   if (isPerformActive()) return;
+  if (isAnyDialogOpen()) return;
+  if (isListeningActive()) {
+    if (handleListeningKey(e)) return;
+    if (e.target?.closest?.("#listen-popover")) return;
+  }
 
   if (consumeArrowSuppression() && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
     return;

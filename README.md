@@ -16,6 +16,31 @@ This editor lets you create guitar tabs using ASCII characters, the standard for
 - **Undo mistakes**: Full undo history keeps your work safe
 - **Work offline**: Install as a Progressive Web App (PWA) and use without internet
 - **Light & dark**: Follows your OS color scheme automatically
+- **Play notes into the tab**: Analyze a microphone or line input entirely in the browser
+
+## Listen: Play Guitar Into the Tab
+
+Place the cursor in a tab block and click **Listen**. Choose the browser audio
+input and one of two local analysis modes:
+
+- **Lead notes** detects one note at a time with low latency and inserts a
+  playable string/fret choice.
+- **Chords** uses a locally bundled Spotify Basic Pitch model, then matches the
+  detected pitches to common shapes in the existing chord database. Chord
+  analysis uses rolling windows, so results appear a few seconds after playing.
+
+The session starts exactly at the current cursor. Use Left/Right to review
+detected events, Up/Down to choose another fretboard position, and Space to
+pause or resume. A selected position anchors later choices so phrases remain in
+the same area of the neck. **Done** keeps the phrase as one undoable edit;
+**Cancel** restores the pre-listen tab.
+
+Microphone and line-input samples are processed in memory with Web Audio,
+TensorFlow.js, and the bundled model. Audio is never uploaded. Browser
+permission and HTTPS (or localhost during development) are required. The first
+version targets clean solo guitar in standard EADGBE tuning; mixed songs,
+alternate tunings, rhythm transcription, and playing techniques are not
+inferred.
 
 ## Import & Export
 
@@ -114,6 +139,7 @@ guitartabs/
     │   ├── serialize.js  #   ASCII format parser/formatter, titles, filenames
     │   ├── share.js      #   Share-URL encode/decode (stable format)
     │   └── persistence.js#   localStorage save/load (stable key + legacy migration)
+    ├── audio/            # Web Audio capture + local lead/chord analysis
     ├── ui/               # DOM layer
     │   ├── editor-view.js#   Tiered rendering + event delegation (see below)
     │   ├── selection.js  #   Drag/keyboard selection, highlight classes
@@ -124,6 +150,7 @@ guitartabs/
     │   ├── dialogs.js    #   jelly-dialog helpers + confirmDialog()
     │   ├── perform.js    #   Fullscreen auto-scroll mode
     │   ├── toast.js      #   jellyToast wrapper (all notifications)
+    │   ├── listen.js     #   Listen popover + transactional phrase entry
     │   ├── tooltip.js    #   Note-name tooltip
     │   ├── theme.js      #   meta theme-color sync with OS scheme
     │   ├── navigation.js #   Arrow-key suppression when switching focus

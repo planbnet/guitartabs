@@ -34,6 +34,7 @@
       <jelly-button id="btn-dbx-open" size="small" variant="platinum" class="tb-btn is-hidden">Open</jelly-button>
       <jelly-button id="btn-dbx-save" size="small" variant="platinum" class="tb-btn is-hidden">Save</jelly-button>
       <jelly-button id="btn-perform" size="small" variant="amber" class="tb-btn">Perform</jelly-button>
+      <jelly-button id="btn-listen" size="small" variant="azure" class="tb-btn">Listen</jelly-button>
       <span class="toolbar-spacer"></span>
       <jelly-button id="btn-legend" size="small" variant="platinum" class="tb-btn">Legend</jelly-button>
       <jelly-icon-button id="btn-settings" size="small" variant="graphite" label="Settings"></jelly-icon-button>
@@ -216,6 +217,59 @@
     <!-- Anchored overlays -->
     <div id="note-tooltip"></div>
     <div id="chord-popup"></div>
+    <div id="listen-popover" role="dialog" aria-label="Listen and add notes">
+      <div class="listen-header">
+        <div>
+          <strong>Listen</strong>
+          <span id="listen-event-count">0 events</span>
+        </div>
+        <select id="listen-mode" aria-label="Detection mode">
+          <option value="lead">Lead notes</option>
+          <option value="chord">Chords</option>
+        </select>
+      </div>
+      <label class="listen-field">
+        <span>Input</span>
+        <select id="listen-device" aria-label="Audio input">
+          <option value="">Default audio input</option>
+        </select>
+      </label>
+      <label class="listen-field">
+        <span>Sensitivity</span>
+        <input id="listen-sensitivity" type="range" min="0" max="1" step="0.05" value="0.5" />
+      </label>
+      <div class="listen-meter"><span id="listen-meter-fill"></span></div>
+      <div id="listen-status" class="listen-status" role="status" aria-live="polite">Ready</div>
+      <div class="listen-result">
+        <div class="listen-result-nav">
+          <button id="listen-prev" type="button" title="Previous event">←</button>
+          <strong id="listen-detection">Play a note</strong>
+          <button id="listen-next" type="button" title="Next event">→</button>
+        </div>
+        <span id="listen-confidence"></span>
+        <pre id="listen-tab-preview">e|-
+B|-
+G|-
+D|-
+A|-
+E|-</pre>
+        <div class="listen-result-nav listen-candidate-nav">
+          <button id="listen-candidate-prev" type="button" title="Previous fingering">↑</button>
+          <span id="listen-candidate">No fingering yet</span>
+          <button id="listen-candidate-next" type="button" title="Next fingering">↓</button>
+        </div>
+        <div id="listen-pending" class="listen-pending is-hidden">
+          <span>Uncertain result</span>
+          <button id="listen-add-pending" type="button">Add anyway</button>
+        </div>
+      </div>
+      <div class="listen-help">←/→ event · ↑/↓ fingering · Space pause</div>
+      <div class="listen-actions">
+        <jelly-button id="listen-cancel" size="small" variant="rose" class="tb-btn">Cancel</jelly-button>
+        <jelly-button id="listen-pause" size="small" variant="platinum" class="tb-btn">Pause</jelly-button>
+        <jelly-button id="listen-done" size="small" variant="mint" class="tb-btn">Done</jelly-button>
+      </div>
+    </div>
 
   </jelly-theme>
 

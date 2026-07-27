@@ -18,5 +18,8 @@ export const on = (type, fn) => {
 };
 
 export const emit = (type, detail) => {
-  target.dispatchEvent(new CustomEvent(type, { detail }));
+  const event = typeof CustomEvent === "function"
+    ? new CustomEvent(type, { detail })
+    : Object.assign(new Event(type), { detail });
+  target.dispatchEvent(event);
 };

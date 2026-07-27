@@ -17,6 +17,10 @@ import {
   replaceDocument,
   startKeyboardSelection,
   updateKeyboardSelection,
+  beginListeningTransaction,
+  applyListeningTransaction,
+  finishListeningTransaction,
+  cancelListeningTransaction,
 } from "../js/core/store.js";
 
 const resetState = () => {
@@ -29,6 +33,7 @@ const resetState = () => {
   state.undoStack = [];
   state.isUndoing = false;
   state.keyboardSelectionAnchor = null;
+  state.listeningTransaction = null;
 };
 
 beforeEach(resetState);
@@ -172,5 +177,36 @@ describe("replaceDocument", () => {
     });
     expect(state.cur).toEqual({ block: 0, stringIdx: 3, col: 7 });
     expect(state.editMode).toBe("shift");
+  });
+});
+
+describe("listening transaction", () => {
+  it("groups live changes into one undo snapshot", () => {
+    state.blocks[0].data[0][0] = "1";
+    const token = beginListeningTransaction();
+    const changed = structuredClone(state.blocks);
+    changed[0].data[0][0] = "9";
+    applyListeningTransaction(token, {
+      blocks: changed,
+      cur: { block: 0, stringIdx: 0, col: 1 },
+    });
+    finishListeningTransaction(token);
+    expect(state.blocks[0].data[0][0]).toBe("9");
+    undo();
+    expect(state.blocks[0].data[0][0]).toBe("1");
+  });
+
+  it("restores the exact baseline and removes the undo entry on cancel", () => {
+    state.blocks[0].data[0][0] = "3";
+    const token = beginListeningTransaction();
+    const changed = structuredClone(state.blocks);
+    changed[0].data[0][0] = "7";
+    applyListeningTransaction(token, {
+      blocks: changed,
+      cur: { block: 0, stringIdx: 0, col: 1 },
+    });
+    cancelListeningTransaction(token);
+    expect(state.blocks[0].data[0][0]).toBe("3");
+    expect(state.undoStack).toHaveLength(0);
   });
 });

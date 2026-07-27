@@ -20,6 +20,7 @@ export const state = {
   undoStack: [],
   isUndoing: false,
   keyboardSelectionAnchor: null,
+  listeningTransaction: null,
 };
 
 // --- Cursor ---
@@ -142,6 +143,7 @@ export const saveUndoState = () => {
 };
 
 export const undo = () => {
+  if (state.listeningTransaction) return;
   const snapshot = state.undoStack.pop();
   if (!snapshot) return;
 
@@ -156,6 +158,58 @@ export const undo = () => {
   emit("dirty");
   clearSelection();
   state.isUndoing = false;
+};
+
+// --- Listening transaction ---
+
+export const beginListeningTransaction = () => {
+  if (state.listeningTransaction) return state.listeningTransaction;
+  const token = {
+    baseline: {
+      blocks: structuredClone(state.blocks),
+      cur: { ...state.cur },
+      editMode: state.editMode,
+      lineLength: state.lineLength,
+    },
+    undoDepth: state.undoStack.length,
+  };
+  saveUndoState();
+  state.listeningTransaction = token;
+  clearSelection();
+  return token;
+};
+
+export const applyListeningTransaction = (token, { blocks, cur }) => {
+  if (!token || state.listeningTransaction !== token) return false;
+  state.blocks = structuredClone(blocks);
+  state.cur = { ...cur };
+  clearSelection();
+  emit("document-replaced");
+  emit("dirty");
+  return true;
+};
+
+export const finishListeningTransaction = (token) => {
+  if (!token || state.listeningTransaction !== token) return false;
+  state.listeningTransaction = null;
+  emit("dirty");
+  return true;
+};
+
+export const cancelListeningTransaction = (token) => {
+  if (!token || state.listeningTransaction !== token) return false;
+  const baseline = token.baseline;
+  state.blocks = structuredClone(baseline.blocks);
+  state.cur = { ...baseline.cur };
+  state.editMode = baseline.editMode;
+  state.lineLength = baseline.lineLength;
+  state.undoStack.length = token.undoDepth;
+  state.listeningTransaction = null;
+  clearSelection();
+  emit("document-replaced");
+  emit("editmode-changed");
+  emit("dirty");
+  return true;
 };
 
 // --- Document ---

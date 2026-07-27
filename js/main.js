@@ -13,6 +13,7 @@ import { initSelection } from "./ui/selection.js";
 import { initEditorView } from "./ui/editor-view.js";
 import { initKeyboard } from "./ui/keyboard.js";
 import { initToolbar } from "./ui/toolbar.js";
+import { initListen } from "./ui/listen.js";
 import { initModals } from "./ui/modals.js";
 import { toast } from "./ui/toast.js";
 import * as dbx from "./dropbox/api.js";
@@ -65,6 +66,7 @@ const init = async () => {
   initEditorView();
   initKeyboard();
   initToolbar();
+  initListen();
   initModals();
   initDropboxUI();
 

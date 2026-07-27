@@ -15,6 +15,7 @@ import {
   saveUndoState,
 } from "../core/store.js";
 import { shiftBlockForInsert } from "../core/editing.js";
+import { formatChordPositionForTab } from "../core/fretboard.js";
 import { $, escapeHtml, focusKeyboard } from "./dom.js";
 
 export const CHORD_REGEX = /\b([A-G](?:#|b)?(?:m|maj|min|dim|aug|sus)?(?:\d{0,2})(?:(?:b|#)\d+)?(?:(?:add|sus)\d+)?(?:(?:\/|\\)[A-G](?:#|b)?)?)\b/g;
@@ -91,23 +92,6 @@ const getActiveChordInsertContext = () => {
 };
 
 // chords-db position → per-string fret text, high e first (grid order).
-const formatChordPositionForTab = (position) => {
-  if (!position || !Array.isArray(position.frets)) return null;
-  const frets = position.frets.slice();
-  while (frets.length < 6) frets.push(-1);
-  const baseFret = Math.max(position.baseFret || 1, 1);
-  const rows = [];
-  for (let i = 0; i < 6; i++) {
-    const fretVal = frets[5 - i];
-    if (typeof fretVal !== "number") rows.push("");
-    else if (fretVal < 0) rows.push("x");
-    else if (fretVal === 0) rows.push("0");
-    else rows.push(String(Math.max(fretVal + baseFret - 1, 0)));
-  }
-  const width = Math.max(1, ...rows.map((v) => v.length || 0));
-  return { rows, width };
-};
-
 const canInsertChordAtActivePosition = () =>
   currentChordPositions.length > 0 && !!getActiveChordInsertContext();
 

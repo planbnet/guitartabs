@@ -497,6 +497,194 @@ body {
   padding: 0.5rem 0;
 }
 
+/* --- Live listening popover --- */
+
+#listen-popover {
+  display: none;
+  position: fixed;
+  z-index: 1001;
+  width: min(340px, calc(100vw - 20px));
+  max-height: calc(100vh - 20px);
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--card) 96%, transparent);
+  color: var(--fg);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+#listen-popover::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+#listen-popover.visible {
+  display: block;
+}
+
+.listening-active .toolbar,
+.listening-active #editor {
+  opacity: 0.72;
+}
+
+.listen-header,
+.listen-actions,
+.listen-result-nav,
+.listen-field,
+.listen-pending {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.listen-header {
+  justify-content: space-between;
+  margin-bottom: 0.7rem;
+}
+
+.listen-header > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.listen-header strong {
+  font-size: 1.05rem;
+}
+
+.listen-header span,
+.listen-field span,
+.listen-confidence,
+.listen-help {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+#listen-popover select,
+#listen-popover input[type="range"] {
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.32rem 0.45rem;
+  min-width: 0;
+}
+
+.listen-field {
+  justify-content: space-between;
+  margin: 0.45rem 0;
+}
+
+.listen-field select,
+.listen-field input {
+  width: 68%;
+}
+
+.listen-meter {
+  height: 6px;
+  margin: 0.65rem 0 0.35rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--neutral);
+}
+
+.listen-meter span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--mint), var(--amber));
+  transition: width 80ms linear;
+}
+
+.listen-status {
+  min-height: 1.2em;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.listen-result {
+  margin: 0.55rem 0;
+  padding: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+}
+
+.listen-result-nav {
+  justify-content: space-between;
+}
+
+.listen-result-nav button,
+.listen-pending button {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--card);
+  color: var(--fg);
+  cursor: pointer;
+  min-width: 2rem;
+  min-height: 1.8rem;
+}
+
+#listen-confidence {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+#listen-tab-preview {
+  margin: 0.55rem auto;
+  width: fit-content;
+  min-width: 6ch;
+  font: 14px/1.25 var(--mono);
+  color: var(--fg);
+}
+
+.listen-candidate-nav span {
+  flex: 1;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.76rem;
+}
+
+.listen-pending {
+  justify-content: space-between;
+  margin-top: 0.55rem;
+  color: var(--amber);
+  font-size: 0.75rem;
+}
+
+.listen-help {
+  margin: 0.35rem 0 0.65rem;
+  text-align: center;
+}
+
+.listen-actions {
+  justify-content: flex-end;
+  /* Jelly buttons paint oversized animation canvases. Keep that invisible
+     bleed from making the popover itself appear scrollable. */
+  overflow: clip;
+}
+
+@media (max-width: 600px) {
+  #listen-popover {
+    position: fixed;
+    top: auto !important;
+    right: 10px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    left: 10px !important;
+    width: auto;
+  }
+}
+
 /* --- Dialog content --- */
 
 jelly-dialog h3 {

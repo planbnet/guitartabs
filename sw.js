@@ -1,7 +1,7 @@
 // Service worker: precaches the whole app so it works offline as a PWA.
 // Bump CACHE_NAME whenever any cached file changes.
 
-const CACHE_NAME = "tab-editor-v6";
+const CACHE_NAME = "tab-editor-v10";
 
 const urlsToCache = [
   "./",
@@ -19,6 +19,13 @@ const urlsToCache = [
   "./js/core/serialize.js",
   "./js/core/share.js",
   "./js/core/persistence.js",
+  "./js/core/fretboard.js",
+  "./js/core/listening-session.js",
+  "./js/core/pitch.js",
+  "./js/audio/capture-worklet.js",
+  "./js/audio/capture.js",
+  "./js/audio/lead-engine.js",
+  "./js/audio/chord-engine.js",
   "./js/ui/dom.js",
   "./js/ui/theme.js",
   "./js/ui/tooltip.js",
@@ -33,6 +40,7 @@ const urlsToCache = [
   "./js/ui/perform.js",
   "./js/ui/pdf.js",
   "./js/ui/toast.js",
+  "./js/ui/listen.js",
   "./js/dropbox/api.js",
   "./js/dropbox/ui.js",
   "./js/vendor/globals.js",
@@ -40,6 +48,9 @@ const urlsToCache = [
   "./js/vendor/vexchords.js",
   "./js/vendor/chords-db.js",
   "./js/vendor/lz-string.min.js",
+  "./js/vendor/basic-pitch.bundle.js",
+  "./js/vendor/basic-pitch-model/model.json",
+  "./js/vendor/basic-pitch-model/group1-shard1of1.bin",
 ];
 
 self.addEventListener("install", (event) => {

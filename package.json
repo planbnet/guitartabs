@@ -6,10 +6,17 @@
   "scripts": {
     "serve": "python3 -m http.server 8000",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "vendor:audio": "esbuild scripts/basic-pitch-vendor-entry.js --bundle --format=esm --platform=browser --target=es2020 --minify --outfile=js/vendor/basic-pitch.bundle.js && node scripts/vendor-audio-assets.mjs"
   },
   "devDependencies": {
+    "@spotify/basic-pitch": "1.0.1",
+    "@tensorflow/tfjs": "3.21.0",
+    "esbuild": "^0.25.0",
     "lz-string": "^1.5.0",
-    "vitest": "^3.2.4"
+    "vitest": "3.2.4"
+  },
+  "overrides": {
+    "vite": "6.1.0"
   }
 }

@@ -1,0 +1,14 @@
+The local chord-analysis bundle contains:
+
+- Spotify Basic Pitch TypeScript 1.0.1 and its model weights
+  https://github.com/spotify/basic-pitch-ts
+  Copyright Spotify AB
+  Licensed under the Apache License 2.0. The complete license text is in
+  BASIC_PITCH_LICENSE.txt.
+
+- TensorFlow.js 3.21.0
+  https://github.com/tensorflow/tfjs
+  Copyright 2018 Google LLC
+  Licensed under the Apache License 2.0. The complete license text is in
+  BASIC_PITCH_LICENSE.txt.
+
